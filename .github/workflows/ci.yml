@@ -1,0 +1,74 @@
+name: CI
+
+on: [push]
+
+jobs:
+  linters:
+    name: Run Linters
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.9
+      - name: Install Python dependencies
+        run: pip install -r requirements_test.txt
+
+      - name: Run Flake8
+        run: |
+          flake8 tahoe_auth0 tests
+
+      - name: Run Black
+        run: |
+           black tahoe_auth0 tests setup.py manage.py runtests.py --check --exclude=migrations
+  django-tests:
+    name: Django Tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The environment here is specific for edX platform, we can add more
+        # later if we feel like it.
+        include:
+          - python-version: 3.5
+            django-version: 2.2
+
+      steps:
+        - uses: actions/checkout@v2
+        - name: Set up Python ${{ matrix.python-version }}
+          uses: actions/setup-python@v2
+          with:
+            python-version: ${{ matrix.python-version }}
+            django-version: ${{ matrix.django-version }}
+        - name: Install dependencies
+          run: |
+            python -m pip install --upgrade pip
+            pip install tox==3.24.3 semantic-version
+        - name: Display Python version
+          run: python -c "import sys; print(sys.version)"
+        - name: Test library version
+          run: python -c "from gestore import __version__; from semantic_version import Version; Version(__version__)"
+        - name: Lint with flake8
+          run: flake8 gestore demoapp --statistics
+        - name: Test with tox
+          run: |
+            runenv=$(echo "${{ matrix.python-version }}" | sed 's/\([2-3]\)\.\([0-9]\)/py\1\2/')
+            djangoenv=$(echo "${{ matrix.django-version }}" | sed 's/\([2-3]\)\.\([0-9]\)/django\1\2/')
+            tox -e $runenv-$djangoenv
+
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install test requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements_test.txt
+      - name: Test with tox ${{ matrix.env.TOXENV }}
+        env: ${{ matrix.env }}
+        run: tox

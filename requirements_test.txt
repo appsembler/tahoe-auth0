@@ -1,5 +1,5 @@
-coverage==4.4.1
-mock>=1.0.1
-flake8>=2.1.0
-tox>=1.7.0
-codecov>=2.0.0
+black==21.8b0
+codecov==2.1.12
+coverage==5.5
+flake8==3.9.2
+tox==3.24.3
