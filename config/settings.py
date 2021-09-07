@@ -35,8 +35,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "social_django",
     "tahoe_auth0",
-    "demoapp",
 ]
 
 MIDDLEWARE = [
@@ -127,3 +127,22 @@ STATIC_URL = "/static/"
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Auth0 settings
+SOCIAL_AUTH_TRAILING_SLASH = False  # Remove trailing slash from routes
+SOCIAL_AUTH_AUTH0_DOMAIN = "dev-4o1hdobw.us.auth0.com"
+SOCIAL_AUTH_AUTH0_KEY = "9TbUCXJUF3u3Q5jyXpOWuKaybiCk3rEg"
+SOCIAL_AUTH_AUTH0_SECRET = (
+    "IpXyqS2weRnXGHKSoy3D7CiMNYwzzUZZpbtIJHXPqAWvZX8_8rOilMAbN_cvkEon"
+)
+
+# Check https://auth0.com/docs/configure/apis/scopes for more info
+SOCIAL_AUTH_AUTH0_SCOPE = ["openid", "profile", "email"]
+
+AUTHENTICATION_BACKENDS = {
+    "tahoe_auth0.auth0backend.Auth0",
+    "django.contrib.auth.backends.ModelBackend",
+}
+
+LOGIN_URL = "/login/auth0"
+LOGIN_REDIRECT_URL = "/dashboard"
