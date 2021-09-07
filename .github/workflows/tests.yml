@@ -27,7 +27,7 @@ jobs:
       - name: Test library version
         run: python -c "from tahoe_auth0 import __version__; from semantic_version import Version; Version(__version__)"
       - name: Lint with flake8
-        run: flake8 tahoe_auth0 demoapp --statistics
+        run: flake8 tahoe_auth0 --statistics
       - name: Test with tox
         run: |
           runenv=$(echo "${{ matrix.python-version }}" | sed 's/\([2-3]\)\.\([0-9]\)/py\1\2/')
