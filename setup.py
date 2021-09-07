@@ -37,7 +37,7 @@ setuptools.setup(
     ],
     python_requires=">=3.5",
     packages=setuptools.find_packages(
-        include=['tahoe_auth0', 'tahoe_auth0.*'],
-        exclude=['tahoe_auth0.tests'],
+        include=["tahoe_auth0", "tahoe_auth0.*"],
+        exclude=["tahoe_auth0.tests"],
     ),
 )
