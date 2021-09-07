@@ -15,7 +15,6 @@ jobs:
           python-version: 3.5
       - name: Install Python dependencies
         run: |
-          pip install black
           pip install -r requirements_test.txt
 
       - name: Run Flake8
