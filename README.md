@@ -1,4 +1,4 @@
-# Tahoe Auth 0 ![https://codecov.io/gh/appsembler/tahoe-auth0](https://codecov.io/gh/appsembler/tahoe-auth0/branch/master/graph/badge.svg) ![Black code style](https://img.shields.io/badge/code%20style-black-000000.svg)
+# Tahoe Auth 0 [![TahoeAuth0 Library](https://github.com/appsembler/tahoe-auth0/actions/workflows/tests.yml/badge.svg)](https://github.com/appsembler/tahoe-auth0/actions/workflows/tests.yml) ![Black code style](https://img.shields.io/badge/code%20style-black-000000.svg)
 
 A package of tools and features for integrating Tahoe with Auth0
 
