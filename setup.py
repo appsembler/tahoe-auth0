@@ -11,7 +11,7 @@ setuptools.setup(
     version=tahoe_auth0.__version__,
     author="Appsembler",
     author_email="ops@appsembler.com",
-    description="Django object management",
+    description="Auth0 user authentication package for Tahoe.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/appsembler/tahoe-auth0",
@@ -26,17 +26,22 @@ setuptools.setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Framework :: Django",
         "Framework :: Django :: 2.2",
-        "Framework :: Django :: 3.0",
-        "Framework :: Django :: 3.1",
-        "Framework :: Django :: 3.2",
     ],
     python_requires=">=3.5",
     packages=setuptools.find_packages(
         include=["tahoe_auth0", "tahoe_auth0.*"],
-        exclude=["tahoe_auth0.tests"],
+        exclude=["tahoe_auth0.tests", "config", "registration", "templates"],
     ),
+    # Other packages already exist in your Open edX app.
+    install_requires=[
+        "python-jose==3.2.0",
+    ],
+    entry_points={
+        "lms.djangoapp": [
+            "tahoe_auth0 = tahoe_auth0.apps:TahoeAuth0Config",
+        ],
+        "cms.djangoapp": [],
+    },
 )

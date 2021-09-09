@@ -1,49 +1,182 @@
-# Tahoe Auth 0 [![TahoeAuth0 Library](https://github.com/appsembler/tahoe-auth0/actions/workflows/tests.yml/badge.svg)](https://github.com/appsembler/tahoe-auth0/actions/workflows/tests.yml) ![Black code style](https://img.shields.io/badge/code%20style-black-000000.svg)
+# Tahoe Auth0 [![CI](https://github.com/appsembler/tahoe-auth0/actions/workflows/tests.yml/badge.svg)](https://github.com/appsembler/tahoe-auth0/actions/workflows/tests.yml) ![Black code style](https://img.shields.io/badge/code%20style-black-000000.svg)
 
-A package of tools and features for integrating Tahoe with Auth0
+A package of Auth0 user authentication modules designed to work in Open edX.
 
 
-## Quickstart
 
-Install Tahoe Auth0
-```console
-pip install tahoe-auth0
+## 0. Prerequisites
+To be able to use this library, you need to have the following
+- An Auth0 [Tenant](https://auth0.com/docs/get-started/create-tenants).
+- An Auth0 [API](https://auth0.com/docs/get-started/set-up-apis)
+- An Auth0 [Machine to Machine](https://auth0.com/docs/get-started/create-apps/machine-to-machine-apps) application.
+- At least one organization.
+- One custom connection.
+
+### 0.1. Configuring the API
+We need to register an API to perform user registration and to communicate with
+Auth0 organizations.
+
+Your API must have the following permissions:
+  - `read:users`
+  - `update:users`
+  - `delete:users`
+  - `create:users`
+  - `read:user_idp_tokens`
+  - `read:organizations`
+  - `create:organization_invitations`
+
+### 0.2. Configuring the Machine to Machine application
+We need to integrate Auth0 with a machine-to-machine (M2M) application. This library
+will use this Machine to Machine application to be able to communicate with
+the API we configured above for two purposes:
+  - Registering users.
+  - Reading organizations and hook them with edx-platform.
+
+This application doesn't require extra configuration.
+
+> **NOTE**
+>
+> The Client ID and Secret of this application are going to be added to
+> `TAHOE_AUTH0_CONFIGS` settings.
+
+### 0.3. Hooking the Machine to Machine application with the API
+Go to the settings page of your API. Click **Machine to Machine Applications** tab and:
+  - Authorize your Machine to Machine application created in the previous step to use the API.
+  - Allow this Machine to Machine application to use all the permission specified above from this API.
+
+### 0.4. Create Regular Web Application
+This application is the primary application our edX platoform is going to use
+to authenticate users.
+
+- For the **Allowed Callback URLs** use something similar to this [http://*.devstack.site:18000/auth/complete/tahoe-auth0/]() or configure yours.
+- For the **Allowed Logout URLs** use something similar to this [http://localhost:18000/]() or configure yours.
+
+> **NOTE**
+>
+> The Client ID and Secret of this application are going to be used in the
+> edx-platform Admin settings.
+
+### 0.5. Configure the Organization
+Each organization is going to be mapped to a single edx-platform organization.
+- The organization name must match the edx-platform `organization.short_name`.
+- Save the organization ID (Similar to `org_1Ab2Cd3`) to create a connection later.
+
+### 0.6. Configure the Connection
+Go to your tenant's _Authentication > Database_ section, and create a custom
+connection for your organization.
+- Connection name must be `con-{org_id}` (For example `con-1Ab2Cd3`).
+- Set `Requires Username` to true and its maximum length to 30 to match current edX setup.
+- In the Applications tab of your connection; Allow your `Regular Web Application` and `Machine to Machine`.
+- Go back to the settings page of the organization you just created, click `Connection`, then:
+  - Enable the connection you created above.
+  - Make sure to "Enable Auto-Membership"
+
+You should be all set now.
+
+## 1. Install
+
+### 1.1. Production
+To use this library in production, add the following to you Ansible deployment:
+```yaml
+EDXAPP_EXTRA_REQUIREMENTS:
+  - name: 'git+https://github.com/appsembler/tahoe-auth0.git#egg=tahoe-auth0'
 ```
 
-Add it to your `INSTALLED_APPS`:
+### 1.2. Devstack
 
-```python
-INSTALLED_APPS = (
-    ...
-    'tahoe_auth0',
-    ...
-)
+We can achieve this using two ways. Both of these methods work in Sultan and
+normal Docker setup:
+
+#### 1.2.1. A quick setup (not persistent).
+```shell
+cd /path/to/devstack
+make lms-shell
+pip install git+https://github.com/appsembler/tahoe-auth0
+```
+#### 1.2.2. Sultan
+In your sultan in configurations file (`configs/.configs.<username>`), append
+the repo path to `EDXAPP_EXTRA_REQUIREMENTS`:
+
+```shell
+EDXAPP_EXTRA_REQUIREMENTS="...,https://github.com/appsembler/tahoe-auth0.git,..."
 ```
 
-Add Tahoe Auth0's URL patterns:
+Then on your host machine run the following command:
+```shell
+sultan instance reconfigure
+```
 
-```python
-from tahoe_auth0 import urls as tahoe_auth0_urls
+> **NOTE**
+>
+> Using this method requires you to manually install `python-jose==3.2.0` in LMS shell
+> ```
+> $ make lms-shell
+> $ pip install python-jose==3.2.0  # version 3.3.0 won't work on python 3.5
+> ```
 
+## 2. Configure the edX app
+This package is following edx-platform plugin architecture. Check [plugins#0b4072b](https://github.com/edx/edx-django-utils/tree/0b4072bea3c4610d654a670b3047a7391deaa69f/edx_django_utils/plugins) documentation for more info on plugins.
 
-urlpatterns = [
+In your `edxapp-envs/lms.yml`:
+
+```yaml
+FEATURES:
     ...
-    url(r'^', include(tahoe_auth0_urls)),
+    ENABLE_TAHOE_AUTH0: true
     ...
+
+THIRD_PARTY_AUTH_BACKENDS: [
+    "tahoe_auth0.backend.TahoeAuth0OAuth2"
 ]
+
+TAHOE_AUTH0_CONFIGS:
+    DOMAIN: <domain>
+    API_CLIENT_ID: <client id>
+    API_CLIENT_SECRET: <client secret>
+...
 ```
 
-## Features
+#### Settings Description
+- `THIRD_PARTY_AUTH_BACKENDS`: Tell Django to use this backend when attempting to authenticate a user.
+- `FEATURES`: edX platform features settings
+  - `ENABLE_TAHOE_AUTH0`: A switch to enable/disable this plugin. We will use this value if and only if `ENABLE_TAHOE_AUTH0` is not defined in Site Configurations.
+- `TAHOE_AUTH0_CONFIGS` A parent node of Auth0 settings. If not configured while the plugin is enabled, we will raise an error.
+  - `DOMAIN`: Your Auth0 Domain assigned to you when creating the tenant, or your configured [Custom Domain](https://auth0.com/docs/brand-and-customize/custom-domains).
+  - `API_CLIENT_ID`: The client ID of your Auth0 _Machine to Machine_ app. Fetched from `Auth0 Site > Applications > Applications > Your Machine to Machine App > Client ID`
+  - `API_CLIENT_SECRET`: The client Secret of your Auth0 _Machine to Machine_ app. Fetched from `Auth0 Site > Applications > Applications > Your Machine to Machine App > Client Secret`
 
-* TODO
+Now run `make dev.up`, or `sultan devstack up` if you're using Sultan.
 
-## Running Tests
--------------
+> **NOTE**
+>
+> You might need to restart your devstack at this point using `make lms-restart`
 
-Does the code actually work?
+## 3. Admin Panel Configurations
+At this stage, you were able to hook the library with Open edX, to finalize
+the setup, you need to add some additional configurations in your LMS admin
+panel.
 
-```console
-source <YOURVIRTUALENV>/bin/activate
-(myenv) $ pip install -r requirements_test.txt
-(myenv) $ tox
-```
+- In your browser, head to [http://localhost:18000/admin]()
+- Go to [THIRD-PARTY AUTHENTICATION > Provider Configuration (OAuth)](http://localhost:18000/admin/third_party_auth/oauth2providerconfig/).
+- Click **Add Provider Configuration**.
+  - Check `Enabled`.
+  - For the `Name` field, we're going to call it `Auth0`.
+  - Check `Skip registration form` (This library will handle this).
+  - Check `Skip email verification` (Auth0 will handle this).
+  - Check `Visible`.
+  - Choose `tahoe-auth0` in the `Backend Name` field.
+  - Insert your Auth0 _Regular Web Application_'s `Client ID` and `Client Secret`.
+  - In `Other Settings`, insert the following:
+    ```json
+    {"SCOPE": ["openid profile email"]}
+    ```
+
+> **NOTE**
+>
+> Using these scopes will make sure edX Platform can read the user's email
+> and profile from Auth0.
+
+
+## 4. Auth0's Django tutorial
+The implementation in this project was based on the Auth0's Django tutorial here:
+[https://auth0.com/docs/quickstart/webapp/django/01-login#configure-auth0](https://auth0.com/docs/quickstart/webapp/django/01-login#configure-auth0)
