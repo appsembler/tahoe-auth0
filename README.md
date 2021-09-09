@@ -71,13 +71,7 @@ panel.
   - Insert your Auth0 `Client ID` and `Client Secret`.
   - In `Other Settings`, insert the following:
     ```json
-    {
-      "SCOPE": [
-        "openid",
-        "profile",
-        "email"
-      ]
-    }
+    {"SCOPE": ["openid profile email"]}
     ```
 
 > Using these settings will make sure edX Platform can read the user's email,
