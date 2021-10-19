@@ -1,4 +1,4 @@
-name: TahoeAuth0 Library
+name: CI
 on: [push]
 
 jobs:
@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 tox semantic-version
+          pip install tox flake8 tox semantic-version pre-commit pyjwkest
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
       - name: Test library version

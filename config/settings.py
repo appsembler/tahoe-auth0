@@ -55,7 +55,7 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [
-            os.path.join(BASE_DIR, "templates"),
+            os.path.join(BASE_DIR, "tahoe_auth0/templates"),
         ],
         "APP_DIRS": True,
         "OPTIONS": {
@@ -128,21 +128,24 @@ STATIC_URL = "/static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Auth0 settings
-SOCIAL_AUTH_TRAILING_SLASH = False  # Remove trailing slash from routes
-SOCIAL_AUTH_AUTH0_DOMAIN = "dev-4o1hdobw.us.auth0.com"
-SOCIAL_AUTH_AUTH0_KEY = "9TbUCXJUF3u3Q5jyXpOWuKaybiCk3rEg"
-SOCIAL_AUTH_AUTH0_SECRET = (
-    "IpXyqS2weRnXGHKSoy3D7CiMNYwzzUZZpbtIJHXPqAWvZX8_8rOilMAbN_cvkEon"
-)
 
 # Check https://auth0.com/docs/configure/apis/scopes for more info
 SOCIAL_AUTH_AUTH0_SCOPE = ["openid", "profile", "email"]
 
 AUTHENTICATION_BACKENDS = {
-    "tahoe_auth0.auth0backend.Auth0",
+    "tahoe_auth0.backend.TahoeAuth0OAuth2",
     "django.contrib.auth.backends.ModelBackend",
 }
 
 LOGIN_URL = "/login/auth0"
 LOGIN_REDIRECT_URL = "/dashboard"
+
+FEATURES = {"ENABLE_TAHOE_AUTH0": True}
+
+TAHOE_AUTH0_CONFIGS = {
+    "DOMAIN": os.environ.get("AUTH0_DOMAIN"),
+    "API_CLIENT_ID": os.environ.get("API_CLIENT_ID"),
+    "API_CLIENT_SECRET": os.environ.get("API_CLIENT_SECRET"),
+}
+
+GET_CURRENT_ORGANIZATION_MOCK = "ahmed"
