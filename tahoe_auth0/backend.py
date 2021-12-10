@@ -45,7 +45,7 @@ class TahoeAuth0OAuth2(BaseOAuth2):
 
         issuer = "https://{}/".format(self.client.domain)
         audience = self.setting("KEY")  # CLIENT_ID
-        jwks = request.urlopen(
+        jwks = request.urlopen(  # nosec
             "https://{}/.well-known/jwks.json".format(self.client.domain)
         )
 
