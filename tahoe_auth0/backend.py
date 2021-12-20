@@ -14,9 +14,9 @@ class TahoeAuth0OAuth2(BaseOAuth2):
 
     name = "tahoe-auth0"
 
-    ACCESS_TOKEN_METHOD = "POST"
+    ACCESS_TOKEN_METHOD = "POST"  # nosec
     REDIRECT_STATE = False
-    REVOKE_TOKEN_METHOD = "GET"
+    REVOKE_TOKEN_METHOD = "GET"  # nosec
 
     @property
     def client(self):
@@ -45,7 +45,7 @@ class TahoeAuth0OAuth2(BaseOAuth2):
 
         issuer = "https://{}/".format(self.client.domain)
         audience = self.setting("KEY")  # CLIENT_ID
-        jwks = request.urlopen(
+        jwks = request.urlopen(  # nosec
             "https://{}/.well-known/jwks.json".format(self.client.domain)
         )
 
