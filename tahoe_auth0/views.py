@@ -9,7 +9,7 @@ from tahoe_auth0.api_client import Auth0ApiClient
 
 
 class RegistrationView(TemplateView):
-    template_name = "register.html"
+    template_name = "tahoe_auth0/register.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
