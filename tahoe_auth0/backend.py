@@ -9,6 +9,12 @@ from social_core.backends.oauth import BaseOAuth2
 from .api_client import Auth0ApiClient
 from .helpers import get_auth0_domain
 
+from .permissions import (
+    get_role_with_default,
+    is_organization_admin,
+    is_organization_staff,
+)
+
 
 class TahoeAuth0OAuth2(BaseOAuth2):
     """A python Social Auth OAuth authentication Backend hooked with Auth0"""
@@ -91,22 +97,32 @@ class TahoeAuth0OAuth2(BaseOAuth2):
         payload = self._get_payload(response)
         return payload["sub"]
 
-    def get_user_details(self, response):
+    def _build_user_details(self, jwt_payload, auth0_user):
         """
-        Fetches the user details from response's JWT.
+        Build user details from jwt_payload and auth0 user info from the API.
         """
-        payload = self._get_payload(response)
-        user_details = self.client.get_user(payload["email"])
+        app_metadata = auth0_user.get('app_metadata', {})
+        metadata_role = get_role_with_default(app_metadata)
 
-        nickname = user_details.get("nickname", payload.get("sub"))
+        nickname = auth0_user.get("nickname", jwt_payload.get("sub"))
         fullname, first_name, last_name = self.get_user_names(
-            fullname=user_details.get("name")
+            fullname=auth0_user.get("name")
         )
 
         return {
-            "username": user_details.get("username", nickname),
-            "email": user_details.get("email"),
+            "username": auth0_user.get("username", nickname),
+            "email": auth0_user.get("email"),
             "fullname": fullname,
             "first_name": first_name,
             "last_name": last_name,
+            "auth0_is_organization_admin": is_organization_admin(metadata_role),
+            "auth0_is_organization_staff": is_organization_staff(metadata_role),
         }
+
+    def get_user_details(self, response):
+        """
+        Fetches the user details from response's JWT and build the social_core JSON object.
+        """
+        jwt_payload = self._get_payload(response)
+        auth0_user = self.client.get_user(jwt_payload["email"])
+        return self._build_user_details(jwt_payload=jwt_payload, auth0_user=auth0_user)
