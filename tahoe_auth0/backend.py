@@ -6,7 +6,8 @@ from urllib import request
 from jose import jwt
 from social_core.backends.oauth import BaseOAuth2
 
-from tahoe_auth0.api_client import Auth0ApiClient
+from .api_client import Auth0ApiClient
+from .helpers import get_auth0_domain
 
 
 class TahoeAuth0OAuth2(BaseOAuth2):
@@ -43,10 +44,10 @@ class TahoeAuth0OAuth2(BaseOAuth2):
         """
         id_token = response.get("id_token")
 
-        issuer = "https://{}/".format(self.client.domain)
+        issuer = "https://{}/".format(get_auth0_domain())
         audience = self.setting("KEY")  # CLIENT_ID
         jwks = request.urlopen(  # nosec
-            "https://{}/.well-known/jwks.json".format(self.client.domain)
+            "https://{}/.well-known/jwks.json".format(get_auth0_domain())
         )
 
         return jwt.decode(
@@ -72,13 +73,13 @@ class TahoeAuth0OAuth2(BaseOAuth2):
         return params
 
     def authorization_url(self):
-        return "https://{}/authorize".format(self.client.domain)
+        return "https://{}/authorize".format(get_auth0_domain())
 
     def access_token_url(self):
-        return "https://{}/oauth/token".format(self.client.domain)
+        return "https://{}/oauth/token".format(get_auth0_domain())
 
     def revoke_token_url(self, token, uid):
-        return "https://{}/logout".format(self.client.domain)
+        return "https://{}/logout".format(get_auth0_domain())
 
     def get_user_id(self, details, response):
         """
