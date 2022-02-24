@@ -8,6 +8,8 @@ from unittest.mock import patch
 from httpretty import HTTPretty
 from jose import jwt
 
+from django.conf import settings
+
 from tahoe_auth0.api_client import Auth0ApiClient
 from tahoe_auth0.backend import TahoeAuth0OAuth2
 from tahoe_auth0.tests.oauth import OAuth2Test
@@ -37,6 +39,7 @@ JWK_PUBLIC_KEY = {key: value for key, value in JWK_KEY.items() if key != "d"}
 DOMAIN = "foobar.auth0.com"
 
 
+@patch.dict(settings.TAHOE_AUTH0_CONFIGS, DOMAIN=DOMAIN)
 class Auth0Test(OAuth2Test):
     backend_path = "tahoe_auth0.backend.TahoeAuth0OAuth2"
     access_token_body = json.dumps(
@@ -77,7 +80,6 @@ class Auth0Test(OAuth2Test):
         )
         return super().auth_handlers(start_url)
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain", return_value=domain)
     @patch.object(
         Auth0ApiClient, "get_user", return_value={"username": expected_username}
     )
@@ -88,7 +90,6 @@ class Auth0Test(OAuth2Test):
     def test_login(self, *args):
         self.do_login()
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain", return_value=domain)
     @patch.object(
         Auth0ApiClient, "get_user", return_value={"username": expected_username}
     )
@@ -99,7 +100,6 @@ class Auth0Test(OAuth2Test):
     def test_partial_pipeline(self, *args):
         self.do_partial_pipeline()
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain", return_value=domain)
     @patch.object(
         Auth0ApiClient, "get_user", return_value={"username": expected_username}
     )
@@ -110,7 +110,6 @@ class Auth0Test(OAuth2Test):
     def test_client(self, *args):
         self.assertIsInstance(self.backend.client, Auth0ApiClient)
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain", return_value=domain)
     @patch.object(
         Auth0ApiClient, "get_user", return_value={"username": expected_username}
     )
@@ -125,7 +124,6 @@ class Auth0Test(OAuth2Test):
             auth_params["organization"], mock_get_auth0_organization_id.return_value
         )
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain", return_value=domain)
     @patch.object(
         Auth0ApiClient, "get_user", return_value={"username": expected_username}
     )
@@ -138,7 +136,6 @@ class Auth0Test(OAuth2Test):
             self.backend.authorization_url(), "https://{}/authorize".format(self.domain)
         )
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain", return_value=domain)
     @patch.object(
         Auth0ApiClient, "get_user", return_value={"username": expected_username}
     )
@@ -152,7 +149,6 @@ class Auth0Test(OAuth2Test):
             "https://{}/oauth/token".format(self.domain),
         )
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain", return_value=domain)
     @patch.object(
         Auth0ApiClient, "get_user", return_value={"username": expected_username}
     )
@@ -166,7 +162,6 @@ class Auth0Test(OAuth2Test):
             "https://{}/logout".format(self.domain),
         )
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain", return_value=domain)
     @patch.object(
         Auth0ApiClient, "get_user", return_value={"username": expected_username}
     )
@@ -183,7 +178,6 @@ class Auth0Test(OAuth2Test):
 
         self.assertEqual(user_id, id_token["sub"])
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain", return_value=domain)
     @patch.object(Auth0ApiClient, "_get_access_token")
     @patch.object(
         Auth0ApiClient, "_get_auth0_organization_id", return_value=organization_id
@@ -195,6 +189,9 @@ class Auth0Test(OAuth2Test):
             "username": self.expected_username,
             "email": "ahmed@appsembler.com",
             "name": "Ahmed Jazzar",
+            "app_metadata": {
+                "role": "Staff",
+            }
         }
 
         user_details = self.backend.get_user_details("response")
@@ -206,6 +203,41 @@ class Auth0Test(OAuth2Test):
                 "fullname": "Ahmed Jazzar",
                 "first_name": "Ahmed",
                 "last_name": "Jazzar",
+                "auth0_is_organization_admin": False,
+                "auth0_is_organization_staff": True,
+            },
+        )
+
+    def test_build_user_details_with_no_role_or_app_metadata(self):
+        """
+        Ensure the backend don't fail on missing `app_metadata`.
+
+        It should assume a safe default role (Learner).
+        """
+        auth0_user = {
+            "username": self.expected_username,
+            "email": "ahmed@appsembler.com",
+            "name": "Ahmed Jazzar",
+            # Not passing `app_metadata` on purpose.
+        }
+        jwt_payload = {
+            "sub": "auth0|a0d9hszw742wd7hkgwha",
+        }
+
+        user_details = self.backend._build_user_details(
+            jwt_payload=jwt_payload,
+            auth0_user=auth0_user,
+        )
+        self.assertEqual(
+            user_details,
+            {
+                "username": self.expected_username,
+                "email": "ahmed@appsembler.com",
+                "fullname": "Ahmed Jazzar",
+                "first_name": "Ahmed",
+                "last_name": "Jazzar",
+                "auth0_is_organization_admin": False,
+                "auth0_is_organization_staff": False,
             },
         )
 
