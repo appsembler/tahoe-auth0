@@ -51,22 +51,14 @@ def is_auth0_enabled():
     return is_flag_enabled
 
 
-def auth0_enabled(function):
+def fail_if_auth0_not_enabled():
     """
-    A decorator that makes sure Auth0 is enabled before executing the function code.
+    A helper that makes sure Auth0 is enabled or throw an EnvironmentError.
     """
-
-    def wrapper():
-        if not is_auth0_enabled():
-            raise EnvironmentError("Tahoe Auth0 is not enabled in your project")
-
-        func = function()
-        return func
-
-    return wrapper
+    if not is_auth0_enabled():
+        raise EnvironmentError("Tahoe Auth0 is not enabled in your project")
 
 
-@auth0_enabled
 def get_auth0_domain():
     """
     A property method used to fetch auth0 domain from Django's settings.FEATURES
@@ -74,6 +66,7 @@ def get_auth0_domain():
 
     We will raise an ImproperlyConfigured error if we couldn't find the setting.
     """
+    fail_if_auth0_not_enabled()
     domain = settings.TAHOE_AUTH0_CONFIGS.get("DOMAIN")
 
     if not domain:
@@ -82,13 +75,13 @@ def get_auth0_domain():
     return domain
 
 
-@auth0_enabled
 def get_client_info():
     """
     A helper method responsible for fetching the access token and the client secret
     from Django settings.FEATURES.
     If either value does not exist, we will raise an ImproperlyConfigured error.
     """
+    fail_if_auth0_not_enabled()
     client_id = settings.TAHOE_AUTH0_CONFIGS.get("API_CLIENT_ID")
     client_secret = settings.TAHOE_AUTH0_CONFIGS.get("API_CLIENT_SECRET")
 
