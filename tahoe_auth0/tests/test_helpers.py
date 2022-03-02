@@ -5,8 +5,8 @@ from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
 
 from tahoe_auth0.helpers import (
-    auth0_enabled,
     build_auth0_query,
+    fail_if_auth0_not_enabled,
     get_auth0_domain,
     get_client_info,
     is_auth0_enabled,
@@ -154,13 +154,11 @@ class TestAuth0EnabledDecorator(TestCase):
     @patch("tahoe_auth0.helpers.is_auth0_enabled", return_value=False)
     def test_not_enabled(self, mock_is_auth0_enabled):
         with self.assertRaises(EnvironmentError):
-            auth0_enabled(lambda: 1)()
+            fail_if_auth0_not_enabled()
 
         mock_is_auth0_enabled.assert_called_once_with()
 
     @patch("tahoe_auth0.helpers.is_auth0_enabled", return_value=True)
     def test_enabled(self, mock_is_auth0_enabled):
-        function_return = auth0_enabled(lambda: 1)()
-
+        fail_if_auth0_not_enabled()
         mock_is_auth0_enabled.assert_called_once_with()
-        self.assertEqual(1, function_return)
