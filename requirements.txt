@@ -1,6 +1,16 @@
 # If any of these libraries are not up-to-date, that's fine.
 # We're sticking to our open edX packages versions.
 
--e git+https://github.com/python-social-auth/social-app-django.git@c00d23c2b45c3317bd35b15ad1b959338689cef8#egg=social-auth-app-django
-python-jose==3.2.0
-social-auth-app-django==3.1.0
+# Open edX requirements: Juniper
+social-auth-app-django==3.3.0 ; python_version <= "3.5"
+python-jose==3.2.0 ; python_version <= "3.5"
+
+# Open edX requirements: Koa
+social-auth-app-django==4.0.0 ; python_version >= "3.8"
+python-jose==3.3.0 ; python_version >= "3.8"
+
+# Test requirements
+httpretty
+pytest-django
+unittest2
+ddt

@@ -34,10 +34,6 @@ setuptools.setup(
         include=["tahoe_auth0", "tahoe_auth0.*"],
         exclude=["tahoe_auth0.tests", "config", "registration", "templates"],
     ),
-    # Other packages already exist in your Open edX app.
-    install_requires=[
-        "python-jose==3.2.0",
-    ],
     entry_points={
         "lms.djangoapp": [
             "tahoe_auth0 = tahoe_auth0.apps:TahoeAuth0Config",

@@ -21,6 +21,9 @@ jobs:
           - name: Juniper
             python-version: 3.5
             tox-env: py35-django22
+          - name: Koa
+            python-version: 3.8
+            tox-env: py38-django22
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
