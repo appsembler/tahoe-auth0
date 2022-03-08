@@ -126,11 +126,7 @@ class Auth0ApiClient(object):
         Any extra values you specify in the give `data` will be passed to
         the `user_metadata` field in Auth0 User object.
         """
-        name = data.pop("name")
-        username = data.pop("username")
-        email = data.pop("email")
-        password = data.pop("password")
-
+        username = data["username"]
         connection = self.get_connection()
 
         logger.debug("Creating user {} in connection: {}".format(username, connection))
@@ -138,15 +134,15 @@ class Auth0ApiClient(object):
             self.users_url,
             headers=self.api_headers,
             json={
-                "name": name,
+                "name": data["name"],
                 "username": username,
-                "email": email,
-                "password": password,
+                "email": data["email"],
+                "password": data["password"],
                 "email_verified": False,
                 "verify_email": True,
                 "connection": connection,
                 "user_metadata": {
-                    "extra_registration_params": data,
+                    "extra_registration_params": data["extra_registration_params"],
                 },
             },
         )
