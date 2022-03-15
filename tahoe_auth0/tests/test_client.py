@@ -1,97 +1,61 @@
-from unittest.mock import PropertyMock, patch
+from unittest.mock import PropertyMock, patch, Mock
 
 from django.test import TestCase
+from django.conf import settings
 
 from tahoe_auth0.api_client import Auth0ApiClient
 
 
+@patch.object(Auth0ApiClient, "_get_access_token", Mock(return_value='xyz-token'))
+@patch.dict(settings.TAHOE_AUTH0_CONFIGS, DOMAIN='domain.world')
 class TestAuth0ApiClient(TestCase):
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
-    @patch.object(Auth0ApiClient, "_get_access_token")
-    def test_init(self, mock_get_access_token, mock_get_auth0_domain):
+    def test_init(self):
         client = Auth0ApiClient()
+        self.assertEqual(client.domain, 'domain.world')
+        self.assertEqual(client.access_token, 'xyz-token')
 
-        self.assertEqual(client.domain, mock_get_auth0_domain.return_value)
-        self.assertEqual(client.access_token, mock_get_access_token.return_value)
-
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
-    @patch.object(Auth0ApiClient, "_get_access_token")
-    def test_token_url(self, mock_get_access_token, mock_get_auth0_domain):
+    def test_token_url(self):
         client = Auth0ApiClient()
-        self.assertEqual(
-            client.token_url,
-            "https://{}/oauth/token".format(mock_get_auth0_domain.return_value),
-        )
+        self.assertEqual(client.token_url, "https://domain.world/oauth/token")
 
     @patch("tahoe_auth0.api_client.get_current_organization")
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
-    @patch.object(Auth0ApiClient, "_get_access_token")
-    def test_organization_url(
-        self,
-        mock_get_access_token,
-        mock_get_auth0_domain,
-        mock_get_current_organization,
-    ):
+    def test_organization_url(self, mock_get_current_organization):
         client = Auth0ApiClient()
         self.assertEqual(
             client.organization_url,
-            "https://{}/api/v2/organizations/name/{}".format(
-                mock_get_auth0_domain.return_value,
+            "https://domain.world/api/v2/organizations/name/{}".format(
                 mock_get_current_organization.return_value.short_name,
             ),
         )
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
-    @patch.object(Auth0ApiClient, "_get_access_token")
-    def test_users_url(self, mock_get_access_token, mock_get_auth0_domain):
+    def test_users_url(self):
         client = Auth0ApiClient()
-        self.assertEqual(
-            client.users_url,
-            "https://{}/api/v2/users".format(mock_get_auth0_domain.return_value),
-        )
+        self.assertEqual(client.users_url, "https://domain.world/api/v2/users")
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
-    @patch.object(Auth0ApiClient, "_get_access_token")
-    def test_api_headers(self, mock_get_access_token, mock_get_auth0_domain):
+    def test_api_headers(self):
         client = Auth0ApiClient()
         self.assertEqual(
             client.api_headers,
             {
                 "Content-Type": "application/json",
-                "authorization": "Bearer {}".format(mock_get_access_token.return_value),
+                "authorization": "Bearer xyz-token",
             },
         )
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
-    @patch.object(Auth0ApiClient, "_get_access_token")
-    def test_api_identifier(self, mock_get_access_token, mock_get_auth0_domain):
+    def test_api_identifier(self):
         client = Auth0ApiClient()
-        self.assertEqual(
-            client.api_identifier,
-            "https://{}/api/v2/".format(mock_get_auth0_domain.return_value),
-        )
+        self.assertEqual(client.api_identifier, "https://domain.world/api/v2/")
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
-    @patch.object(Auth0ApiClient, "_get_access_token")
     @patch.object(Auth0ApiClient, "_get_auth0_organization_id")
-    def test_organization_id(
-        self,
-        mock_get_auth0_organization_id,
-        mock_get_access_token,
-        mock_get_auth0_domain,
-    ):
+    def test_organization_id(self, mock_get_auth0_organization_id):
         client = Auth0ApiClient()
         oid = client.organization_id
 
         mock_get_auth0_organization_id.assert_called_once_with()
         self.assertEqual(oid, mock_get_auth0_organization_id.return_value)
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
-    @patch.object(Auth0ApiClient, "_get_access_token")
     @patch.object(Auth0ApiClient, "organization_id")
-    def test_get_connection(
-        self, mock_organization_id, mock_get_access_token, mock_get_auth0_domain
-    ):
+    def test_get_connection(self, mock_organization_id):
         mock_value = "con_someid"
         mock_organization_id.__get__ = PropertyMock(return_value=mock_value)
         client = Auth0ApiClient()
@@ -99,11 +63,9 @@ class TestAuth0ApiClient(TestCase):
         org_id = mock_value.split("_")[1]
         self.assertEqual("con-{}".format(org_id), client.get_connection())
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
-    @patch.object(Auth0ApiClient, "_get_access_token")
     @patch.object(Auth0ApiClient, "organization_id")
     def test_get_connection_unexpected(
-        self, mock_organization_id, mock_get_access_token, mock_get_auth0_domain
+        self, mock_organization_id
     ):
         mock_value = "someidnounderscores"
         mock_organization_id.__get__ = PropertyMock(return_value=mock_value)
@@ -112,61 +74,25 @@ class TestAuth0ApiClient(TestCase):
         with self.assertRaises(ValueError):
             client.get_connection()
 
-    @patch("tahoe_auth0.api_client.requests.post")
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
-    @patch("tahoe_auth0.api_client.helpers.get_client_info")
-    def test_get_access_token(
-        self, mock_get_client_info, mock_get_auth0_domain, mock_post
-    ):
-        client_id = "client"
-        client_secret = "secret"
-        mock_get_client_info.return_value = (client_id, client_secret)
-
-        client = Auth0ApiClient()
-        access_token = client._get_access_token()
-
-        self.assertEqual(access_token, mock_post.return_value.json()["access_token"])
-
-        headers = {"content-type": "application/x-www-form-urlencoded"}
-        data = {
-            "grant_type": "client_credentials",
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "audience": client.api_identifier,
-        }
-        mock_post.assert_called_with(client.token_url, headers=headers, data=data)
-
     @patch("tahoe_auth0.api_client.requests.get")
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
-    @patch.object(Auth0ApiClient, "_get_access_token")
-    def test_get_auth0_organization_id(
-        self, mock_get_access_token, mock_get_auth0_domain, mock_get
-    ):
+    def test_get_auth0_organization_id(self, mock_get):
         client = Auth0ApiClient()
         org_id = client._get_auth0_organization_id()
 
         self.assertEqual(org_id, mock_get.return_value.json()["id"])
         mock_get.assert_called_with(client.organization_url, headers=client.api_headers)
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
-    @patch.object(Auth0ApiClient, "_get_access_token")
-    def test_create_user_no_name(self, mock_get_access_token, mock_get_auth0_domain):
+    def test_create_user_no_name(self):
         client = Auth0ApiClient()
         with self.assertRaises(KeyError):
             client.create_user({})
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
-    @patch.object(Auth0ApiClient, "_get_access_token")
-    def test_create_user_no_username(
-        self, mock_get_access_token, mock_get_auth0_domain
-    ):
+    def test_create_user_no_username(self):
         client = Auth0ApiClient()
         with self.assertRaises(KeyError):
             client.create_user({"name": "Ahmed Jazzar"})
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
-    @patch.object(Auth0ApiClient, "_get_access_token")
-    def test_create_user_no_email(self, mock_get_access_token, mock_get_auth0_domain):
+    def test_create_user_no_email(self):
         client = Auth0ApiClient()
         with self.assertRaises(KeyError):
             client.create_user(
@@ -176,11 +102,7 @@ class TestAuth0ApiClient(TestCase):
                 }
             )
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
-    @patch.object(Auth0ApiClient, "_get_access_token")
-    def test_create_user_no_password(
-        self, mock_get_access_token, mock_get_auth0_domain
-    ):
+    def test_create_user_no_password(self):
         client = Auth0ApiClient()
         with self.assertRaises(KeyError):
             client.create_user(
@@ -192,16 +114,8 @@ class TestAuth0ApiClient(TestCase):
             )
 
     @patch("tahoe_auth0.api_client.requests.post")
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
-    @patch.object(Auth0ApiClient, "_get_access_token")
-    @patch.object(Auth0ApiClient, "get_connection")
-    def test_create_user(
-        self,
-        mock_get_connection,
-        mock_get_access_token,
-        mock_get_auth0_domain,
-        mock_post,
-    ):
+    @patch.object(Auth0ApiClient, "get_connection", Mock())
+    def test_create_user(self, mock_post):
         client = Auth0ApiClient()
         resp = client.create_user(
             {
@@ -234,14 +148,10 @@ class TestAuth0ApiClient(TestCase):
         )
 
     @patch("tahoe_auth0.api_client.requests.get")
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
     @patch("tahoe_auth0.api_client.helpers.build_auth0_query")
-    @patch.object(Auth0ApiClient, "_get_access_token")
     def test_get_user(
         self,
-        mock_get_access_token,
         mock_build_auth0_query,
-        mock_get_auth0_domain,
         mock_get,
     ):
         client = Auth0ApiClient()
@@ -254,3 +164,28 @@ class TestAuth0ApiClient(TestCase):
         self.assertIsInstance(user, dict)
 
         mock_get.assert_called_with(url, headers=client.api_headers)
+
+
+@patch("tahoe_auth0.api_client.requests.post")
+@patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
+@patch("tahoe_auth0.api_client.helpers.get_client_info")
+def test_get_access_token(
+    mock_get_client_info, mock_get_auth0_domain, mock_post
+):
+    client_id = "client"
+    client_secret = "secret"
+    mock_get_client_info.return_value = (client_id, client_secret)
+
+    client = Auth0ApiClient()
+    access_token = client._get_access_token()
+
+    assert access_token == mock_post.return_value.json()["access_token"]
+
+    headers = {"content-type": "application/x-www-form-urlencoded"}
+    data = {
+        "grant_type": "client_credentials",
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "audience": client.api_identifier,
+    }
+    mock_post.assert_called_with(client.token_url, headers=headers, data=data)
