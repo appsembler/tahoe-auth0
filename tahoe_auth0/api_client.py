@@ -37,6 +37,11 @@ class Auth0ApiClient(object):
         return "https://{}/api/v2/users".format(self.domain)
 
     @property
+    def change_password_via_reset_url(self):
+        # This API uses the legacy password reset call, because api/v2 don't provide a way to reset yet.
+        return "https://{}/dbconnections/change_password".format(self.domain)
+
+    @property
     def api_headers(self):
         """
         A common place to set Auth0 API headers.
@@ -72,6 +77,29 @@ class Auth0ApiClient(object):
             )
 
         return "con-{}".format(org_id)
+
+    def change_password_via_reset_for_db_connection(self, email):
+        """
+        Start password reset for a specific email via /dbconnections/change_password .
+        """
+        connection = self.get_connection()
+
+        logger.debug("Starting password reset for user %s in connection: %s", email, connection)
+
+        client_id, _client_secret = helpers.get_client_info()
+        resp = requests.post(
+            self.change_password_via_reset_url,
+            json={
+                "client_id": client_id,
+                "email": email,
+                "connection": connection,
+            },
+        )
+        logger.info("Response received from password reset api: %s", resp.text)
+
+        resp.raise_for_status()
+
+        return resp
 
     def _get_access_token(self):
         """
