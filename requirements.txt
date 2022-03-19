@@ -10,7 +10,9 @@ social-auth-app-django==4.0.0 ; python_version >= "3.8"
 python-jose==3.3.0 ; python_version >= "3.8"
 
 # Test requirements
+django-coverage-plugin
 httpretty
 pytest-django
+pytest-cov
 unittest2
 ddt
