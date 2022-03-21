@@ -4,14 +4,19 @@
 # Open edX requirements: Juniper
 social-auth-app-django==3.3.0 ; python_version <= "3.5"
 python-jose==3.2.0 ; python_version <= "3.5"
+requests==2.23.0 ; python_version <= "3.5"
 
 # Open edX requirements: Koa
 social-auth-app-django==4.0.0 ; python_version >= "3.8"
 python-jose==3.3.0 ; python_version >= "3.8"
+requests==2.25.0 ; python_version >= "3.8"
 
 # Test requirements
+# Those may break, when they do, pin them.
 django-coverage-plugin
+requests-mock
 httpretty
+pytest
 pytest-django
 pytest-cov
 unittest2

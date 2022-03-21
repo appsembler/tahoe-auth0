@@ -80,7 +80,7 @@ class TestAuth0ApiClient(TestCase):
         org_id = client._get_auth0_organization_id()
 
         self.assertEqual(org_id, mock_get.return_value.json()["id"])
-        mock_get.assert_called_with(client.organization_url, headers=client.api_headers)
+        mock_get.assert_called_with(client.organization_url, headers=client.api_headers, timeout=10)
 
     def test_create_user_no_name(self):
         client = Auth0ApiClient()
@@ -145,6 +145,7 @@ class TestAuth0ApiClient(TestCase):
                     },
                 },
             },
+            timeout=10,
         )
 
     @patch("tahoe_auth0.api_client.requests.get")
@@ -163,7 +164,7 @@ class TestAuth0ApiClient(TestCase):
         user = client.get_user("ahmed@appsembler.com")
         self.assertIsInstance(user, dict)
 
-        mock_get.assert_called_with(url, headers=client.api_headers)
+        mock_get.assert_called_with(url, headers=client.api_headers, timeout=10)
 
 
 @patch("tahoe_auth0.api_client.requests.post")
@@ -188,4 +189,4 @@ def test_get_access_token(
         "client_secret": client_secret,
         "audience": client.api_identifier,
     }
-    mock_post.assert_called_with(client.token_url, headers=headers, data=data)
+    mock_post.assert_called_with(client.token_url, headers=headers, data=data, timeout=10)

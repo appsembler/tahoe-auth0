@@ -11,8 +11,9 @@ from tahoe_auth0 import helpers
 logger = logging.getLogger(__name__)
 
 
-class Auth0ApiClient(object):
-    def __init__(self):
+class Auth0ApiClient:
+    def __init__(self, request_timeout=10):
+        self.request_timeout = request_timeout
         self.domain = helpers.get_auth0_domain()
         self.access_token = self._get_access_token()
 
@@ -35,6 +36,11 @@ class Auth0ApiClient(object):
     @property
     def users_url(self):
         return "https://{}/api/v2/users".format(self.domain)
+
+    @property
+    def change_password_via_reset_url(self):
+        # This API uses the legacy password reset call, because api/v2 don't provide a way to reset yet.
+        return "https://{}/dbconnections/change_password".format(self.domain)
 
     @property
     def api_headers(self):
@@ -73,6 +79,30 @@ class Auth0ApiClient(object):
 
         return "con-{}".format(org_id)
 
+    def change_password_via_reset_for_db_connection(self, email):
+        """
+        Start password reset for a specific email via /dbconnections/change_password .
+        """
+        connection = self.get_connection()
+
+        logger.debug("Starting password reset for user %s in connection: %s", email, connection)
+
+        client_id, _client_secret = helpers.get_client_info()
+        resp = requests.post(
+            self.change_password_via_reset_url,
+            json={
+                "client_id": client_id,
+                "email": email,
+                "connection": connection,
+            },
+            timeout=self.request_timeout,
+        )
+        logger.info("Response received from password reset api: %s", resp.text)
+
+        resp.raise_for_status()
+
+        return resp
+
     def _get_access_token(self):
         """
         Generates an access token token responsible for fetching the
@@ -94,7 +124,12 @@ class Auth0ApiClient(object):
         }
 
         logger.debug("Fetching an access token for Auth0")
-        r = requests.post(self.token_url, headers=headers, data=data)
+        r = requests.post(
+            self.token_url,
+            headers=headers,
+            data=data,
+            timeout=self.request_timeout,
+        )
         r.raise_for_status()
 
         data = r.json()
@@ -105,7 +140,11 @@ class Auth0ApiClient(object):
         Sends an API request to Auth0 to get the organization details. Needed to sign
         the user in the current organization.
         """
-        resp = requests.get(self.organization_url, headers=self.api_headers)
+        resp = requests.get(
+            self.organization_url,
+            headers=self.api_headers,
+            timeout=self.request_timeout,
+        )
 
         logger.info(
             "Response received from Auth0 organization API: {}".format(resp.text)
@@ -149,10 +188,12 @@ class Auth0ApiClient(object):
                     "extra_registration_params": data,
                 },
             },
+            timeout=self.request_timeout,
         )
         logger.info(
             "Response received from Auth0 create user API: {}".format(resp.text)
         )
+        resp.raise_for_status()
 
         return resp
 
@@ -199,7 +240,11 @@ class Auth0ApiClient(object):
         }
         url = self.users_url + "?q={}".format(helpers.build_auth0_query(**query))
 
-        resp = requests.get(url, headers=self.api_headers)
+        resp = requests.get(
+            url,
+            headers=self.api_headers,
+            timeout=self.request_timeout,
+        )
         resp.raise_for_status()
 
         return resp.json()[0] if len(resp.json()) > 0 else {}
