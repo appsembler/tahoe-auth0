@@ -7,6 +7,7 @@ from jose import jwt
 from social_core.backends.oauth import BaseOAuth2
 
 from .api_client import Auth0ApiClient
+from .constants import BACKEND_NAME
 from .helpers import get_auth0_domain
 
 from .permissions import (
@@ -19,7 +20,7 @@ from .permissions import (
 class TahoeAuth0OAuth2(BaseOAuth2):
     """A python Social Auth OAuth authentication Backend hooked with Auth0"""
 
-    name = "tahoe-auth0"
+    name = BACKEND_NAME
 
     ACCESS_TOKEN_METHOD = "POST"  # nosec
     REDIRECT_STATE = False

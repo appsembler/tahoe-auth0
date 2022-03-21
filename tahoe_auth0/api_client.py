@@ -103,6 +103,38 @@ class Auth0ApiClient:
 
         return resp
 
+    def update_user(self, auth0_user_id, properties):
+        """
+        Update Auth0 user properties via PATCH /api/v2/users/.
+
+        See: https://auth0.com/docs/api/management/v2#!/Users/patch_users_by_id
+        """
+        users_api_url = 'https://{domain}/api/v2/users/{user_id}'.format(
+            domain=self.domain,
+            user_id=auth0_user_id,
+        )
+
+        connection = self.get_connection()
+
+        logger.debug("Updating properties of user %s in connection: %s", auth0_user_id, connection)
+
+        client_id, _client_secret = helpers.get_client_info()
+        resp = requests.patch(
+            users_api_url,
+            json={
+                "client_id": client_id,
+                "connection": connection,
+                **properties,
+            },
+            headers=self.api_headers,
+            timeout=self.request_timeout,
+        )
+        logger.info("Response received from update user api: %s", resp.text)
+
+        resp.raise_for_status()
+
+        return resp
+
     def _get_access_token(self):
         """
         Generates an access token token responsible for fetching the
