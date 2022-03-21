@@ -2,25 +2,70 @@
 Tests for the external `api` helpers module.
 """
 import pytest
+from django.contrib.auth.models import AnonymousUser, User
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from requests import HTTPError
-from unittest.mock import patch, Mock, PropertyMock
-
-from django.conf import settings
+from social_django.models import UserSocialAuth
+from unittest.mock import Mock, PropertyMock, patch
 
 from tahoe_auth0.api_client import Auth0ApiClient
 from tahoe_auth0.api import (
+    get_auth0_id_by_user,
     request_password_reset,
+    update_user,
+    update_user_email,
 )
+from tahoe_auth0.constants import BACKEND_NAME
 
 
-@patch.dict(settings.TAHOE_AUTH0_CONFIGS, {
-    'DOMAIN': 'example.auth0.local',
-    'API_CLIENT_ID': 'dummy-client-id',
-    'API_CLIENT_SECRET': 'dummy-client-secret',
-})
-@patch.object(Auth0ApiClient, 'organization_id', PropertyMock(return_value='org_xyz'))
-@patch.object(Auth0ApiClient, "_get_access_token", Mock(return_value='xyz-token'))
-def test_password_reset_helper(requests_mock):
+def user_factory(username='myusername', email=None, **kwargs):
+    """
+    Stupid user factory.
+    """
+    return User.objects.create(
+        email=email or '{username}@example.local'.format(
+            username=username,
+        ),
+        username=username,
+        **kwargs,
+    )
+
+
+def auth0_entry_factory(user, social_uid):
+    """
+    Create auth0 social entry.
+    """
+    return UserSocialAuth.objects.create(
+        user=user,
+        uid=social_uid,
+        provider=BACKEND_NAME,
+    )
+
+
+def user_with_social_factory(social_uid, user_kwargs=None):
+    """
+    Create a user with social auth entry.
+    """
+    user = user_factory(user_kwargs or {})
+    social = auth0_entry_factory(user, social_uid)
+    return user, social
+
+
+@pytest.fixture
+def auth0_api_configs(monkeypatch, settings):
+    """
+    Configure auth0 and patch api related settings and functions.
+    """
+    monkeypatch.setattr(Auth0ApiClient, 'organization_id', PropertyMock(return_value='org_xyz'))
+    monkeypatch.setattr(Auth0ApiClient, '_get_access_token', Mock(return_value='xyz-token'))
+    settings.TAHOE_AUTH0_CONFIGS = {
+        'DOMAIN': 'example.auth0.local',
+        'API_CLIENT_ID': 'dummy-client-id',
+        'API_CLIENT_SECRET': 'dummy-client-secret',
+    }
+
+
+def test_password_reset_helper(auth0_api_configs, requests_mock):
     """
     Password reset can be requested.
     """
@@ -35,14 +80,7 @@ def test_password_reset_helper(requests_mock):
     assert response.status_code == 200, 'should succeed: {}'.format(response.content.decode('utf-8'))
 
 
-@patch.dict(settings.TAHOE_AUTH0_CONFIGS, {
-    'DOMAIN': 'example.auth0.local',
-    'API_CLIENT_ID': 'dummy-client-id',
-    'API_CLIENT_SECRET': 'dummy-client-secret',
-})
-@patch.object(Auth0ApiClient, 'organization_id', PropertyMock(return_value='org_xyz'))
-@patch.object(Auth0ApiClient, "_get_access_token", Mock(return_value='xyz-token'))
-def test_password_reset_helper_unauthorized(requests_mock):
+def test_password_reset_helper_unauthorized(auth0_api_configs, requests_mock):
     """
     Ensure an error is raised if something goes wrong.
     """
@@ -56,3 +94,107 @@ def test_password_reset_helper_unauthorized(requests_mock):
     )
     with pytest.raises(HTTPError, match='501 Server Error'):
         request_password_reset('someone@example.com')
+
+
+@pytest.mark.django_db
+def test_get_auth0_id_by_user():
+    """
+    Tests for `get_auth0_id_by_user` validation and errors.
+    """
+    auth0_id = 'auth0|bd7793e40ca2d0ca'
+    user, social = user_with_social_factory(social_uid=auth0_id)
+    assert get_auth0_id_by_user(user=user) == auth0_id
+
+
+@pytest.mark.django_db
+def test_get_auth0_id_by_user_validation():
+    """
+    Tests for `get_auth0_id_by_user` validation and errors.
+    """
+    with pytest.raises(ValueError, match='User should be provided'):
+        get_auth0_id_by_user(user=None)
+
+    with pytest.raises(ValueError, match='Non-anonymous User should be provided'):
+        get_auth0_id_by_user(user=AnonymousUser())
+
+    user_without_auth0_id = user_factory()
+    with pytest.raises(ObjectDoesNotExist):  # Should fail for malformed data
+        get_auth0_id_by_user(user=user_without_auth0_id)
+
+
+@pytest.mark.django_db
+def test_get_auth0_id_by_user_two_auth0_ids():
+    """
+    Tests for `get_auth0_id_by_user` fail for malformed data.
+    """
+    user_with_two_ids = user_factory()
+    auth0_entry_factory(user_with_two_ids, 'test1')
+    auth0_entry_factory(user_with_two_ids, 'test2')
+    with pytest.raises(MultipleObjectsReturned):  # Should fail for malformed data
+        get_auth0_id_by_user(user=user_with_two_ids)
+
+
+@pytest.mark.django_db
+def test_update_user_helper(auth0_api_configs, requests_mock):
+    """
+    Can update user.
+    """
+    requests_mock.patch(
+        'https://example.auth0.local/api/v2/users/auth0|8d8be3c5f86c1a3e',
+        headers={
+            'content-type': 'application/json',
+        },
+        text='success',
+    )
+    user, _social = user_with_social_factory(social_uid='auth0|8d8be3c5f86c1a3e')
+    response = update_user(user, {
+        'email': 'new_email@example.local',
+    })
+    assert response.status_code == 200, 'should succeed: {}'.format(response.content.decode('utf-8'))
+
+
+@pytest.mark.django_db
+def test_failed_update_user_helper(auth0_api_configs, requests_mock):
+    """
+    Ensure an error is raised if something goes wrong with `update_user`.
+    """
+    requests_mock.patch(
+        'https://example.auth0.local/api/v2/users/auth0|a4f92ba3f42435cd',
+        headers={
+            'content-type': 'application/json',
+        },
+        status_code=400,  # Simulate an error
+        text='Connection does not exist',
+    )
+    user, _social = user_with_social_factory(social_uid='auth0|a4f92ba3f42435cd')
+    with pytest.raises(HTTPError, match='400 Client Error'):
+        update_user(user, properties={
+            'name': 'new name',
+        })
+
+
+@pytest.mark.django_db
+@patch('tahoe_auth0.api.update_user')
+def test_update_user_email(mock_update_user):
+    """
+    Test `update_user_email`.
+    """
+    assert not mock_update_user.called
+    user, _social = user_with_social_factory(social_uid='auth0|8d8be3c5f86c1a3e')
+    update_user_email(user, 'test.email@example.com')
+    mock_update_user.assert_called_once_with(user, properties={'email': 'test.email@example.com'})
+
+
+@pytest.mark.django_db
+@patch('tahoe_auth0.api.update_user')
+def test_update_user_email_verified(mock_update_user):
+    """
+    Test `update_user_email` with verified.
+    """
+    assert not mock_update_user.called
+    user, _social = user_with_social_factory(social_uid='auth0|8d8be3c5f86c1a3e')
+    update_user_email(user, 'test.email@example.com', set_email_as_verified=True)
+    mock_update_user.assert_called_once_with(user, properties={
+        'email': 'test.email@example.com',
+        'email_verified': True,
+    })
