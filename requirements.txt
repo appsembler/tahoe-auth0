@@ -1,6 +1,9 @@
 # If any of these libraries are not up-to-date, that's fine.
 # We're sticking to our open edX packages versions.
 
+# Open edX requirements: all releases
+site-configuration-client==0.1.4
+
 # Open edX requirements: Juniper
 social-auth-app-django==3.3.0 ; python_version <= "3.5"
 python-jose==3.2.0 ; python_version <= "3.5"

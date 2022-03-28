@@ -4,6 +4,8 @@ from ddt import data, ddt, unpack
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
 
+from site_config_client.openedx.test_helpers import override_site_config
+
 from tahoe_auth0.helpers import (
     build_auth0_query,
     fail_if_auth0_not_enabled,
@@ -15,14 +17,14 @@ from tahoe_auth0.helpers import (
 
 class TestDomain(TestCase):
     @override_settings(TAHOE_AUTH0_CONFIGS={})
-    @patch("tahoe_auth0.helpers.configuration_helpers.get_value", return_value=True)
-    def test_no_domain(self, mock_get_value):
+    @override_site_config("admin", ENABLE_TAHOE_AUTH0=True)
+    def test_no_domain(self):
         with self.assertRaises(ImproperlyConfigured):
             get_auth0_domain()
 
     @override_settings(TAHOE_AUTH0_CONFIGS={"DOMAIN": "example.auth0.com"})
-    @patch("tahoe_auth0.helpers.configuration_helpers.get_value", return_value=True)
-    def test_with_domain(self, mock_get_value):
+    @override_site_config("admin", ENABLE_TAHOE_AUTH0=True)
+    def test_with_domain(self):
         actual_domain = get_auth0_domain()
         self.assertEqual(actual_domain, "example.auth0.com")
 
@@ -39,16 +41,15 @@ class TestClientInfo(TestCase):
             "present in your `TAHOE_AUTH0_CONFIGS`"
         )
 
-        with override_settings(TAHOE_AUTH0_CONFIGS=settings), patch(
-            "tahoe_auth0.helpers.configuration_helpers.get_value", return_value=True
-        ), self.assertRaisesMessage(ImproperlyConfigured, message):
-            get_client_info()
+        with override_settings(TAHOE_AUTH0_CONFIGS=settings), override_site_config("admin", ENABLE_TAHOE_AUTH0=True):
+            with self.assertRaisesMessage(ImproperlyConfigured, message):
+                get_client_info()
 
     @override_settings(
         TAHOE_AUTH0_CONFIGS={"API_CLIENT_ID": "cid", "API_CLIENT_SECRET": "secret"}
     )
-    @patch("tahoe_auth0.helpers.configuration_helpers.get_value", return_value=True)
-    def test_correct_configuration(self, mock_get_value):
+    @override_site_config("admin", ENABLE_TAHOE_AUTH0=True)
+    def test_correct_configuration(self):
         client_id, client_secret = get_client_info()
         self.assertEqual(client_id, "cid")
         self.assertEqual(client_secret, "secret")
@@ -108,15 +109,13 @@ class TestIsAuth0Enabled(TestCase):
         A site configuration is of higher order, if nothing is defined in the
         site configurations, we will fallback to settings.FEATURES configuration
         """
-        with patch(
-            "tahoe_auth0.helpers.configuration_helpers.get_value",
-            return_value=configuration_flag,
-        ), override_settings(FEATURES={"ENABLE_TAHOE_AUTH0": feature_flag}):
-            self.assertEqual(is_enabled, is_auth0_enabled())
+        with override_settings(FEATURES={"ENABLE_TAHOE_AUTH0": feature_flag}):
+            with override_site_config("admin", ENABLE_TAHOE_AUTH0=configuration_flag):
+                self.assertEqual(is_enabled, is_auth0_enabled())
 
     @override_settings(TAHOE_AUTH0_CONFIGS={})
-    @patch("tahoe_auth0.helpers.configuration_helpers.get_value", return_value=True)
-    def test_flag_enabled_no_settings(self, mock_get_value):
+    @override_site_config("admin", ENABLE_TAHOE_AUTH0=True)
+    def test_flag_enabled_no_settings(self):
         message = (
             "`TAHOE_AUTH0_CONFIGS` settings must be defined when enabling Tahoe Auth0"
         )
@@ -124,16 +123,16 @@ class TestIsAuth0Enabled(TestCase):
             is_auth0_enabled()
 
     @override_settings(TAHOE_AUTH0_CONFIGS=None)
-    @patch("tahoe_auth0.helpers.configuration_helpers.get_value", return_value=True)
-    def test_flag_enabled_none_settings(self, mock_get_value):
+    @override_site_config("admin", ENABLE_TAHOE_AUTH0=True)
+    def test_flag_enabled_none_settings(self):
         message = (
             "`TAHOE_AUTH0_CONFIGS` settings must be defined when enabling Tahoe Auth0"
         )
         with self.assertRaisesMessage(ImproperlyConfigured, message):
             is_auth0_enabled()
 
-    @patch("tahoe_auth0.helpers.configuration_helpers.get_value", return_value="True")
-    def test_auth0_settings_enabled_not_boolean(self, mock_get_value):
+    @override_site_config("admin", ENABLE_TAHOE_AUTH0="True")
+    def test_auth0_settings_enabled_not_boolean(self):
         message = "`ENABLE_TAHOE_AUTH0` must be of boolean type"
         with self.assertRaisesMessage(ImproperlyConfigured, message):
             is_auth0_enabled()
@@ -145,8 +144,8 @@ class TestIsAuth0Enabled(TestCase):
             "API_CLIENT_SECRET": "client-secret",
         },
     )
-    @patch("tahoe_auth0.helpers.configuration_helpers.get_value", return_value=True)
-    def test_auth0_enabled(self, mock_get_value):
+    @override_site_config("admin", ENABLE_TAHOE_AUTH0=True)
+    def test_auth0_enabled(self):
         self.assertEqual(True, is_auth0_enabled())
 
 

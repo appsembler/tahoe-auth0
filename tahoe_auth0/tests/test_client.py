@@ -1,13 +1,13 @@
+import pytest
 from unittest.mock import PropertyMock, patch, Mock
 
 from django.test import TestCase
-from django.conf import settings
 
 from tahoe_auth0.api_client import Auth0ApiClient
 
 
 @patch.object(Auth0ApiClient, "_get_access_token", Mock(return_value='xyz-token'))
-@patch.dict(settings.TAHOE_AUTH0_CONFIGS, DOMAIN='domain.world')
+@pytest.mark.usefixtures('mock_auth0_settings')
 class TestAuth0ApiClient(TestCase):
     def test_init(self):
         client = Auth0ApiClient()

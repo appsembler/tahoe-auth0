@@ -4,7 +4,8 @@ import urllib.parse
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
+
+from site_config_client.openedx import api as config_client_api
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ def is_auth0_enabled():
     Raises `ImproperlyConfigured` if the configuration not correct.
     """
 
-    is_flag_enabled = configuration_helpers.get_value("ENABLE_TAHOE_AUTH0")
+    is_flag_enabled = config_client_api.get_admin_value("ENABLE_TAHOE_AUTH0")
 
     if is_flag_enabled is None:
         is_flag_enabled = settings.FEATURES.get("ENABLE_TAHOE_AUTH0", False)

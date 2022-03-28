@@ -3,12 +3,11 @@ Most of the tests here are unique to us. However, the work is Inspired by:
 https://github.com/python-social-auth/social-core/blob/master/social_core/backends/auth0.py
 """
 import json
+import pytest
 from unittest.mock import patch
 
 from httpretty import HTTPretty
 from jose import jwt
-
-from django.conf import settings
 
 from tahoe_auth0.api_client import Auth0ApiClient
 from tahoe_auth0.backend import TahoeAuth0OAuth2
@@ -36,12 +35,11 @@ JWK_KEY = {
 
 JWK_PUBLIC_KEY = {key: value for key, value in JWK_KEY.items() if key != "d"}
 
-DOMAIN = "foobar.auth0.com"
 
-
-@patch.dict(settings.TAHOE_AUTH0_CONFIGS, DOMAIN=DOMAIN)
+@pytest.mark.usefixtures('mock_auth0_settings')
 class Auth0Test(OAuth2Test):
     backend_path = "tahoe_auth0.backend.TahoeAuth0OAuth2"
+    domain = "domain.world"
     access_token_body = json.dumps(
         {
             "access_token": "foobar",
@@ -54,7 +52,7 @@ class Auth0Test(OAuth2Test):
                     "name": "John Doe",
                     "picture": "http://example.com/image.png",
                     "sub": "123456",
-                    "iss": "https://{}/".format(DOMAIN),
+                    "iss": "https://{}/".format(domain),
                 },
                 JWK_KEY,
                 algorithm="RS256",
@@ -62,13 +60,12 @@ class Auth0Test(OAuth2Test):
         }
     )
     expected_username = "foobar"
-    domain = "foobar.auth0.com"
     organization_id = "org_sOm31D"
     jwks_url = "https://{}/.well-known/jwks.json".format(domain)
 
     def extra_settings(self):
         settings = super().extra_settings()
-        settings["SOCIAL_AUTH_" + self.name + "_DOMAIN"] = DOMAIN
+        settings["SOCIAL_AUTH_" + self.name + "_DOMAIN"] = self.domain
         return settings
 
     def auth_handlers(self, start_url):
