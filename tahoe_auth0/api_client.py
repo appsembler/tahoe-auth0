@@ -5,7 +5,10 @@ import logging
 
 import requests
 
-from openedx.core.djangoapps.appsembler.sites.utils import get_current_organization
+from django.core.exceptions import ImproperlyConfigured
+
+from site_config_client.openedx import api as openedx_api
+
 from tahoe_auth0 import helpers
 
 logger = logging.getLogger(__name__)
@@ -20,18 +23,6 @@ class Auth0ApiClient:
     @property
     def token_url(self):
         return "https://{}/oauth/token".format(self.domain)
-
-    @property
-    def organization_url(self):
-        """
-        Returns Auth0's organizations url path, customized for the current
-        organization name.
-        """
-        organization = get_current_organization()
-
-        return "https://{}/api/v2/organizations/name/{}".format(
-            self.domain, organization.short_name
-        )
 
     @property
     def users_url(self):
@@ -168,23 +159,10 @@ class Auth0ApiClient:
         return data["access_token"]
 
     def _get_auth0_organization_id(self):
-        """
-        Sends an API request to Auth0 to get the organization details. Needed to sign
-        the user in the current organization.
-        """
-        resp = requests.get(
-            self.organization_url,
-            headers=self.api_headers,
-            timeout=self.request_timeout,
-        )
-
-        logger.info(
-            "Response received from Auth0 organization API: {}".format(resp.text)
-        )
-        resp.raise_for_status()
-
-        data = resp.json()
-        return data["id"]
+        organization_id = openedx_api.get_admin_value('AUTH0_ORGANIZATION_ID')
+        if not organization_id:
+            raise ImproperlyConfigured('AUTH0_ORGANIZATION_ID config of type `admin` is required for auth0 to work')
+        return organization_id
 
     def create_user(self, data):
         """

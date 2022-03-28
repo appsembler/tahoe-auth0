@@ -58,8 +58,8 @@ to authenticate users.
 
 ### 0.5. Configure the Organization
 Each organization is going to be mapped to a single edx-platform organization.
-- The organization name must match the edx-platform `organization.short_name`.
-- Save the organization ID (Similar to `org_1Ab2Cd3`) to create a connection later.
+- The Auth0 organization ID (Similar to `org_1Ab2Cd3`) should be saved into `admin` config in Site Configuration.  
+- Save the organization ID to create a connection later.
 
 ### 0.6. Configure the Connection
 Go to your tenant's _Authentication > Database_ section, and create a custom

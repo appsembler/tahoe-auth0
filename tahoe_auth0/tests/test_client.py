@@ -1,8 +1,10 @@
 import pytest
+from django.core.exceptions import ImproperlyConfigured
 from unittest.mock import PropertyMock, patch, Mock
 
 from django.test import TestCase
 
+from site_config_client.openedx.test_helpers import override_site_config
 from tahoe_auth0.api_client import Auth0ApiClient
 
 
@@ -17,16 +19,6 @@ class TestAuth0ApiClient(TestCase):
     def test_token_url(self):
         client = Auth0ApiClient()
         self.assertEqual(client.token_url, "https://domain.world/oauth/token")
-
-    @patch("tahoe_auth0.api_client.get_current_organization")
-    def test_organization_url(self, mock_get_current_organization):
-        client = Auth0ApiClient()
-        self.assertEqual(
-            client.organization_url,
-            "https://domain.world/api/v2/organizations/name/{}".format(
-                mock_get_current_organization.return_value.short_name,
-            ),
-        )
 
     def test_users_url(self):
         client = Auth0ApiClient()
@@ -74,13 +66,17 @@ class TestAuth0ApiClient(TestCase):
         with self.assertRaises(ValueError):
             client.get_connection()
 
-    @patch("tahoe_auth0.api_client.requests.get")
-    def test_get_auth0_organization_id(self, mock_get):
+    @override_site_config('admin', AUTH0_ORGANIZATION_ID='org_testid')
+    def test_get_auth0_organization_id(self):
         client = Auth0ApiClient()
         org_id = client._get_auth0_organization_id()
+        self.assertEqual(org_id, 'org_testid')
 
-        self.assertEqual(org_id, mock_get.return_value.json()["id"])
-        mock_get.assert_called_with(client.organization_url, headers=client.api_headers, timeout=10)
+    @override_site_config('admin', OTHER_CONFIG='some-value')
+    def test_get_auth0_organization_id_missing_org_id(self):
+        client = Auth0ApiClient()
+        with pytest.raises(ImproperlyConfigured, match='AUTH0_ORGANIZATION_ID'):
+            client._get_auth0_organization_id()
 
     def test_create_user_no_name(self):
         client = Auth0ApiClient()
@@ -149,6 +145,7 @@ class TestAuth0ApiClient(TestCase):
         )
 
     @patch("tahoe_auth0.api_client.requests.get")
+    @override_site_config('admin', AUTH0_ORGANIZATION_ID='org_testid')
     @patch("tahoe_auth0.api_client.helpers.build_auth0_query")
     def test_get_user(
         self,
