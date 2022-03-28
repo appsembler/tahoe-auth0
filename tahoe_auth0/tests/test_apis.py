@@ -18,6 +18,12 @@ from tahoe_auth0.api import (
 from tahoe_auth0.constants import BACKEND_NAME
 
 
+pytestmark = pytest.mark.usefixtures(
+    'mock_auth0_settings',
+    'transactional_db',
+)
+
+
 def user_factory(username='myusername', email=None, **kwargs):
     """
     Stupid user factory.
@@ -52,25 +58,20 @@ def user_with_social_factory(social_uid, user_kwargs=None):
 
 
 @pytest.fixture
-def auth0_api_configs(monkeypatch, settings):
+def mock_auth0_api_configs(monkeypatch, settings):
     """
-    Configure auth0 and patch api related settings and functions.
+    Mock API related configuration and settings to make API calls easier in tests.
     """
     monkeypatch.setattr(Auth0ApiClient, 'organization_id', PropertyMock(return_value='org_xyz'))
     monkeypatch.setattr(Auth0ApiClient, '_get_access_token', Mock(return_value='xyz-token'))
-    settings.TAHOE_AUTH0_CONFIGS = {
-        'DOMAIN': 'example.auth0.local',
-        'API_CLIENT_ID': 'dummy-client-id',
-        'API_CLIENT_SECRET': 'dummy-client-secret',
-    }
 
 
-def test_password_reset_helper(auth0_api_configs, requests_mock):
+def test_password_reset_helper(mock_auth0_api_configs, requests_mock):
     """
     Password reset can be requested.
     """
     requests_mock.post(
-        'https://example.auth0.local/dbconnections/change_password',
+        'https://domain.world/dbconnections/change_password',
         headers={
             'content-type': 'application/json',
         },
@@ -80,12 +81,12 @@ def test_password_reset_helper(auth0_api_configs, requests_mock):
     assert response.status_code == 200, 'should succeed: {}'.format(response.content.decode('utf-8'))
 
 
-def test_password_reset_helper_unauthorized(auth0_api_configs, requests_mock):
+def test_password_reset_helper_unauthorized(mock_auth0_api_configs, requests_mock):
     """
     Ensure an error is raised if something goes wrong.
     """
     requests_mock.post(
-        'https://example.auth0.local/dbconnections/change_password',
+        'https://domain.world/dbconnections/change_password',
         headers={
             'content-type': 'application/json',
         },
@@ -96,7 +97,6 @@ def test_password_reset_helper_unauthorized(auth0_api_configs, requests_mock):
         request_password_reset('someone@example.com')
 
 
-@pytest.mark.django_db
 def test_get_auth0_id_by_user():
     """
     Tests for `get_auth0_id_by_user` validation and errors.
@@ -106,7 +106,6 @@ def test_get_auth0_id_by_user():
     assert get_auth0_id_by_user(user=user) == auth0_id
 
 
-@pytest.mark.django_db
 def test_get_auth0_id_by_user_validation():
     """
     Tests for `get_auth0_id_by_user` validation and errors.
@@ -122,7 +121,6 @@ def test_get_auth0_id_by_user_validation():
         get_auth0_id_by_user(user=user_without_auth0_id)
 
 
-@pytest.mark.django_db
 def test_get_auth0_id_by_user_two_auth0_ids():
     """
     Tests for `get_auth0_id_by_user` fail for malformed data.
@@ -134,13 +132,12 @@ def test_get_auth0_id_by_user_two_auth0_ids():
         get_auth0_id_by_user(user=user_with_two_ids)
 
 
-@pytest.mark.django_db
-def test_update_user_helper(auth0_api_configs, requests_mock):
+def test_update_user_helper(mock_auth0_api_configs, requests_mock):
     """
     Can update user.
     """
     requests_mock.patch(
-        'https://example.auth0.local/api/v2/users/auth0|8d8be3c5f86c1a3e',
+        'https://domain.world/api/v2/users/auth0|8d8be3c5f86c1a3e',
         headers={
             'content-type': 'application/json',
         },
@@ -153,13 +150,12 @@ def test_update_user_helper(auth0_api_configs, requests_mock):
     assert response.status_code == 200, 'should succeed: {}'.format(response.content.decode('utf-8'))
 
 
-@pytest.mark.django_db
-def test_failed_update_user_helper(auth0_api_configs, requests_mock):
+def test_failed_update_user_helper(mock_auth0_api_configs, requests_mock):
     """
     Ensure an error is raised if something goes wrong with `update_user`.
     """
     requests_mock.patch(
-        'https://example.auth0.local/api/v2/users/auth0|a4f92ba3f42435cd',
+        'https://domain.world/api/v2/users/auth0|a4f92ba3f42435cd',
         headers={
             'content-type': 'application/json',
         },
@@ -173,7 +169,6 @@ def test_failed_update_user_helper(auth0_api_configs, requests_mock):
         })
 
 
-@pytest.mark.django_db
 @patch('tahoe_auth0.api.update_user')
 def test_update_user_email(mock_update_user):
     """
@@ -185,7 +180,6 @@ def test_update_user_email(mock_update_user):
     mock_update_user.assert_called_once_with(user, properties={'email': 'test.email@example.com'})
 
 
-@pytest.mark.django_db
 @patch('tahoe_auth0.api.update_user')
 def test_update_user_email_verified(mock_update_user):
     """
