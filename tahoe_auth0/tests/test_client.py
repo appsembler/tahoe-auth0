@@ -1,11 +1,12 @@
 import pytest
 from django.core.exceptions import ImproperlyConfigured
-from unittest.mock import PropertyMock, patch, Mock
+from unittest.mock import patch, Mock
 
 from django.test import TestCase
 
 from site_config_client.openedx.test_helpers import override_site_config
 from tahoe_auth0.api_client import Auth0ApiClient
+from .conftest import mock_auth0_api_settings
 
 
 @patch.object(Auth0ApiClient, "_get_access_token", Mock(return_value='xyz-token'))
@@ -46,24 +47,15 @@ class TestAuth0ApiClient(TestCase):
         mock_get_auth0_organization_id.assert_called_once_with()
         self.assertEqual(oid, mock_get_auth0_organization_id.return_value)
 
-    @patch.object(Auth0ApiClient, "organization_id")
-    def test_get_connection(self, mock_organization_id):
-        mock_value = "con_someid"
-        mock_organization_id.__get__ = PropertyMock(return_value=mock_value)
+    @override_site_config('admin', AUTH0_CONNECTION_ID='con-testxyzid')
+    def test_get_connection(self):
         client = Auth0ApiClient()
+        self.assertEqual(client.get_connection(), 'con-testxyzid')
 
-        org_id = mock_value.split("_")[1]
-        self.assertEqual("con-{}".format(org_id), client.get_connection())
-
-    @patch.object(Auth0ApiClient, "organization_id")
-    def test_get_connection_unexpected(
-        self, mock_organization_id
-    ):
-        mock_value = "someidnounderscores"
-        mock_organization_id.__get__ = PropertyMock(return_value=mock_value)
+    @override_site_config('admin', SOME_CONFIG='test')
+    def test_get_missing_connection_id(self):
         client = Auth0ApiClient()
-
-        with self.assertRaises(ValueError):
+        with pytest.raises(ImproperlyConfigured, match='AUTH0_CONNECTION_ID'):
             client.get_connection()
 
     @override_site_config('admin', AUTH0_ORGANIZATION_ID='org_testid')
@@ -145,7 +137,7 @@ class TestAuth0ApiClient(TestCase):
         )
 
     @patch("tahoe_auth0.api_client.requests.get")
-    @override_site_config('admin', AUTH0_ORGANIZATION_ID='org_testid')
+    @mock_auth0_api_settings
     @patch("tahoe_auth0.api_client.helpers.build_auth0_query")
     def test_get_user(
         self,

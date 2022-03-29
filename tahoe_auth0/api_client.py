@@ -53,22 +53,13 @@ class Auth0ApiClient:
 
     def get_connection(self):
         """
-        Return the organization connection. The connection name is destructed
-        from Auth0 organization ID.
-        In Auth0, the organization ID is consists of two parts:
-            `org_<unique str>`
-        The connection ID is going to be con-<unique str> since Auth0
-        doesn't accept `_` in the connection name.
+        Return the organization connection ID from configuration.
         """
-        full_id = self.organization_id
-        try:
-            org_id = full_id.split("_")[1]
-        except IndexError:
-            raise ValueError(
-                "Unexpected value received for organization_id: {}".format(full_id)
-            )
+        connection_id = openedx_api.get_admin_value('AUTH0_CONNECTION_ID')
+        if not connection_id:
+            raise ImproperlyConfigured('AUTH0_CONNECTION_ID of type `admin` is needed for each site configuration')
 
-        return "con-{}".format(org_id)
+        return connection_id
 
     def change_password_via_reset_for_db_connection(self, email):
         """
