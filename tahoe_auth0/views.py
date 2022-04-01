@@ -4,7 +4,8 @@ from django.http import JsonResponse
 from django.views import View
 from django.views.generic import TemplateView
 
-from openedx.core.djangoapps.appsembler.sites.utils import get_current_organization
+from site_config_client.openedx import api as config_api
+
 from tahoe_auth0.api_client import Auth0ApiClient
 
 
@@ -13,9 +14,7 @@ class RegistrationView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        organization = get_current_organization()
-        context["organization_name"] = organization.name
+        context["organization_name"] = config_api.get_setting_value("PLATFORM_NAME")
         return context
 
 

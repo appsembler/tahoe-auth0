@@ -5,6 +5,8 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from requests import Response
 
+from site_config_client.openedx.test_helpers import override_site_config
+
 from tahoe_auth0.api_client import Auth0ApiClient
 from tahoe_auth0.views import RegistrationView
 
@@ -13,16 +15,11 @@ class TestRegistrationView(TestCase):
     def setUp(self) -> None:
         self.view = RegistrationView()
 
-    @patch("tahoe_auth0.views.get_current_organization")
-    def test_get_context_data(self, mock_get_current_organization):
+    @override_site_config("setting", PLATFORM_NAME="My Platform")
+    def test_get_context_data(self):
         context = self.view.get_context_data()
-
-        mock_get_current_organization.assert_called_once_with()
         self.assertIn("organization_name", context)
-        self.assertEqual(
-            context["organization_name"],
-            mock_get_current_organization.return_value.name,
-        )
+        self.assertEqual(context["organization_name"], "My Platform")
 
 
 class TestRegistrationAPIView(TestCase):

@@ -6,9 +6,8 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from requests import HTTPError
 from social_django.models import UserSocialAuth
-from unittest.mock import Mock, PropertyMock, patch
+from unittest.mock import patch
 
-from tahoe_auth0.api_client import Auth0ApiClient
 from tahoe_auth0.api import (
     get_auth0_id_by_user,
     request_password_reset,
@@ -16,6 +15,9 @@ from tahoe_auth0.api import (
     update_user_email,
 )
 from tahoe_auth0.constants import BACKEND_NAME
+
+
+from .conftest import mock_auth0_api_settings
 
 
 pytestmark = pytest.mark.usefixtures(
@@ -57,16 +59,8 @@ def user_with_social_factory(social_uid, user_kwargs=None):
     return user, social
 
 
-@pytest.fixture
-def mock_auth0_api_configs(monkeypatch, settings):
-    """
-    Mock API related configuration and settings to make API calls easier in tests.
-    """
-    monkeypatch.setattr(Auth0ApiClient, 'organization_id', PropertyMock(return_value='org_xyz'))
-    monkeypatch.setattr(Auth0ApiClient, '_get_access_token', Mock(return_value='xyz-token'))
-
-
-def test_password_reset_helper(mock_auth0_api_configs, requests_mock):
+@mock_auth0_api_settings
+def test_password_reset_helper(requests_mock):
     """
     Password reset can be requested.
     """
@@ -77,11 +71,13 @@ def test_password_reset_helper(mock_auth0_api_configs, requests_mock):
         },
         text='success',
     )
+
     response = request_password_reset('someone@example.com')
     assert response.status_code == 200, 'should succeed: {}'.format(response.content.decode('utf-8'))
 
 
-def test_password_reset_helper_unauthorized(mock_auth0_api_configs, requests_mock):
+@mock_auth0_api_settings
+def test_password_reset_helper_unauthorized(requests_mock):
     """
     Ensure an error is raised if something goes wrong.
     """
@@ -132,7 +128,8 @@ def test_get_auth0_id_by_user_two_auth0_ids():
         get_auth0_id_by_user(user=user_with_two_ids)
 
 
-def test_update_user_helper(mock_auth0_api_configs, requests_mock):
+@mock_auth0_api_settings
+def test_update_user_helper(requests_mock):
     """
     Can update user.
     """
@@ -150,7 +147,8 @@ def test_update_user_helper(mock_auth0_api_configs, requests_mock):
     assert response.status_code == 200, 'should succeed: {}'.format(response.content.decode('utf-8'))
 
 
-def test_failed_update_user_helper(mock_auth0_api_configs, requests_mock):
+@mock_auth0_api_settings
+def test_failed_update_user_helper(requests_mock):
     """
     Ensure an error is raised if something goes wrong with `update_user`.
     """

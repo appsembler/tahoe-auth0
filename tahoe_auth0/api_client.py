@@ -5,7 +5,10 @@ import logging
 
 import requests
 
-from openedx.core.djangoapps.appsembler.sites.utils import get_current_organization
+from django.core.exceptions import ImproperlyConfigured
+
+from site_config_client.openedx import api as openedx_api
+
 from tahoe_auth0 import helpers
 
 logger = logging.getLogger(__name__)
@@ -20,18 +23,6 @@ class Auth0ApiClient:
     @property
     def token_url(self):
         return "https://{}/oauth/token".format(self.domain)
-
-    @property
-    def organization_url(self):
-        """
-        Returns Auth0's organizations url path, customized for the current
-        organization name.
-        """
-        organization = get_current_organization()
-
-        return "https://{}/api/v2/organizations/name/{}".format(
-            self.domain, organization.short_name
-        )
 
     @property
     def users_url(self):
@@ -62,22 +53,13 @@ class Auth0ApiClient:
 
     def get_connection(self):
         """
-        Return the organization connection. The connection name is destructed
-        from Auth0 organization ID.
-        In Auth0, the organization ID is consists of two parts:
-            `org_<unique str>`
-        The connection ID is going to be con-<unique str> since Auth0
-        doesn't accept `_` in the connection name.
+        Return the organization connection ID from configuration.
         """
-        full_id = self.organization_id
-        try:
-            org_id = full_id.split("_")[1]
-        except IndexError:
-            raise ValueError(
-                "Unexpected value received for organization_id: {}".format(full_id)
-            )
+        connection_id = openedx_api.get_admin_value('AUTH0_CONNECTION_ID')
+        if not connection_id:
+            raise ImproperlyConfigured('AUTH0_CONNECTION_ID of type `admin` is needed for each site configuration')
 
-        return "con-{}".format(org_id)
+        return connection_id
 
     def change_password_via_reset_for_db_connection(self, email):
         """
@@ -168,23 +150,10 @@ class Auth0ApiClient:
         return data["access_token"]
 
     def _get_auth0_organization_id(self):
-        """
-        Sends an API request to Auth0 to get the organization details. Needed to sign
-        the user in the current organization.
-        """
-        resp = requests.get(
-            self.organization_url,
-            headers=self.api_headers,
-            timeout=self.request_timeout,
-        )
-
-        logger.info(
-            "Response received from Auth0 organization API: {}".format(resp.text)
-        )
-        resp.raise_for_status()
-
-        data = resp.json()
-        return data["id"]
+        organization_id = openedx_api.get_admin_value('AUTH0_ORGANIZATION_ID')
+        if not organization_id:
+            raise ImproperlyConfigured('AUTH0_ORGANIZATION_ID config of type `admin` is required for auth0 to work')
+        return organization_id
 
     def create_user(self, data):
         """

@@ -147,5 +147,3 @@ TAHOE_AUTH0_CONFIGS = {
     "API_CLIENT_ID": os.environ.get("API_CLIENT_ID"),
     "API_CLIENT_SECRET": os.environ.get("API_CLIENT_SECRET"),
 }
-
-GET_CURRENT_ORGANIZATION_MOCK = "ahmed"
