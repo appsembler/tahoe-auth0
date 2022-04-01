@@ -21,7 +21,7 @@
       </h2>
       <p class="mt-2 text-center text-sm text-gray-600">
         Or
-        <a href="{% url "social:begin" "tahoe-auth0" %}?auth_entry=login&next=/dashboard" class="font-medium text-blue-600 hover:text-blue-500">
+        <a href="{% url "social:begin" "tahoe-idp" %}?auth_entry=login&next=/dashboard" class="font-medium text-blue-600 hover:text-blue-500">
           Login instead
         </a>
       </p>
@@ -96,7 +96,7 @@
     e.preventDefault();
     const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-    fetch('{% url "tahoe_auth0:register_api" %}', {
+    fetch('{% url "tahoe_idp:register_api" %}', {
       method: 'POST',
       headers: {
         'X-CSRFToken': csrftoken,
@@ -113,7 +113,7 @@
       })
     }).then((resp) => {
       if (resp.ok){
-        window.location.href = '{% url "social:begin" "tahoe-auth0" %}?auth_entry=login&next=/dashboard';
+        window.location.href = '{% url "social:begin" "tahoe-idp" %}?auth_entry=login&next=/dashboard';
       } else {
         console.error(resp.text);
       }

@@ -6,11 +6,11 @@ from django.views.generic import TemplateView
 
 from site_config_client.openedx import api as config_api
 
-from tahoe_auth0.api_client import Auth0ApiClient
+from tahoe_idp.api_client import Auth0ApiClient
 
 
 class RegistrationView(TemplateView):
-    template_name = "tahoe_auth0/register.html"
+    template_name = "tahoe_idp/register.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

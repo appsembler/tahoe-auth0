@@ -1,6 +1,6 @@
 from django.urls import path
 
-from tahoe_auth0.views import RegistrationAPIView, RegistrationView
+from tahoe_idp.views import RegistrationAPIView, RegistrationView
 
 urlpatterns = [
     path("register", RegistrationAPIView.as_view(), name="register_api"),

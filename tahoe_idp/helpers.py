@@ -10,9 +10,9 @@ from site_config_client.openedx import api as config_client_api
 logger = logging.getLogger(__name__)
 
 
-def is_auth0_enabled():
+def is_tahoe_idp_enabled():
     """
-    A helper method that checks if Auth0 is enabled or not.
+    A helper method that checks if Tahoe IdP is enabled or not.
 
     We will read the feature flag from:
         - Site Configurations
@@ -24,54 +24,53 @@ def is_auth0_enabled():
     Raises `ImproperlyConfigured` if the configuration not correct.
     """
 
-    is_flag_enabled = config_client_api.get_admin_value("ENABLE_TAHOE_AUTH0")
+    is_flag_enabled = config_client_api.get_admin_value("ENABLE_TAHOE_IDP")
 
     if is_flag_enabled is None:
-        is_flag_enabled = settings.FEATURES.get("ENABLE_TAHOE_AUTH0", False)
+        is_flag_enabled = settings.FEATURES.get("ENABLE_TAHOE_IDP", False)
         logger.debug(
-            "Tahoe Auth0 flag read from settings.FEATURES: {}".format(is_flag_enabled)
+            "Tahoe IdP flag read from settings.FEATURES: {}".format(is_flag_enabled)
         )
     else:
         logger.debug(
-            "Tahoe Auth0 flag read from site configuration: {}".format(is_flag_enabled)
+            "Tahoe IdP flag read from site configuration: {}".format(is_flag_enabled)
         )
 
     if not isinstance(is_flag_enabled, bool):
-        raise ImproperlyConfigured("`ENABLE_TAHOE_AUTH0` must be of boolean type")
+        raise ImproperlyConfigured("`ENABLE_TAHOE_IDP` must be of boolean type")
 
     # This can be done in a single line, but I left like this for readability
     if is_flag_enabled:
-        auth0_settings = getattr(settings, "TAHOE_AUTH0_CONFIGS", None)
+        tahoe_idp_settings = getattr(settings, "TAHOE_IDP_CONFIGS", None)
 
-        if not auth0_settings:
+        if not tahoe_idp_settings:
             raise ImproperlyConfigured(
-                "`TAHOE_AUTH0_CONFIGS` settings must be defined when enabling "
-                "Tahoe Auth0"
+                "`TAHOE_IDP_CONFIGS` settings must be defined when enabling "
+                "Tahoe IdP"
             )
 
     return is_flag_enabled
 
 
-def fail_if_auth0_not_enabled():
+def fail_if_tahoe_idp_not_enabled():
     """
-    A helper that makes sure Auth0 is enabled or throw an EnvironmentError.
+    A helper that makes sure Tahoe IdP is enabled or throw an EnvironmentError.
     """
-    if not is_auth0_enabled():
-        raise EnvironmentError("Tahoe Auth0 is not enabled in your project")
+    if not is_tahoe_idp_enabled():
+        raise EnvironmentError("Tahoe IdP is not enabled in your project")
 
 
-def get_auth0_domain():
+def get_idp_domain():
     """
-    A property method used to fetch auth0 domain from Django's settings.FEATURES
-    variable.
+    A property method used to fetch IdP domain from Django's settings variable.
 
     We will raise an ImproperlyConfigured error if we couldn't find the setting.
     """
-    fail_if_auth0_not_enabled()
-    domain = settings.TAHOE_AUTH0_CONFIGS.get("DOMAIN")
+    fail_if_tahoe_idp_not_enabled()
+    domain = settings.TAHOE_IDP_CONFIGS.get("DOMAIN")
 
     if not domain:
-        raise ImproperlyConfigured("Auth0 `DOMAIN` cannot be empty")
+        raise ImproperlyConfigured("Tahoe IdP `DOMAIN` cannot be empty")
 
     return domain
 
@@ -82,14 +81,14 @@ def get_client_info():
     from Django settings.FEATURES.
     If either value does not exist, we will raise an ImproperlyConfigured error.
     """
-    fail_if_auth0_not_enabled()
-    client_id = settings.TAHOE_AUTH0_CONFIGS.get("API_CLIENT_ID")
-    client_secret = settings.TAHOE_AUTH0_CONFIGS.get("API_CLIENT_SECRET")
+    fail_if_tahoe_idp_not_enabled()
+    client_id = settings.TAHOE_IDP_CONFIGS.get("API_CLIENT_ID")
+    client_secret = settings.TAHOE_IDP_CONFIGS.get("API_CLIENT_SECRET")
 
     if not client_id or not client_secret:
         raise ImproperlyConfigured(
             "Both `API_CLIENT_ID` and `API_CLIENT_SECRET` must be present "
-            "in your `TAHOE_AUTH0_CONFIGS`"
+            "in your `TAHOE_IDP_CONFIGS`"
         )
 
     return client_id, client_secret
@@ -97,7 +96,9 @@ def get_client_info():
 
 def build_auth0_query(**kwargs):
     """
-    Responsible for building a querystring used in Auth0 GET APIs.
+    Responsible for building a querystring used in Tahoe IdP GET APIs.
+
+    This is Auth0-specific.
     """
     args = [
         urllib.parse.quote_plus('{}:"{}"'.format(key, value))

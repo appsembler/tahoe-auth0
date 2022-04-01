@@ -9,7 +9,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 from site_config_client.openedx import api as openedx_api
 
-from tahoe_auth0 import helpers
+from . import helpers
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class Auth0ApiClient:
     def __init__(self, request_timeout=10):
         self.request_timeout = request_timeout
-        self.domain = helpers.get_auth0_domain()
+        self.domain = helpers.get_idp_domain()
         self.access_token = self._get_access_token()
 
     @property
@@ -55,9 +55,9 @@ class Auth0ApiClient:
         """
         Return the organization connection ID from configuration.
         """
-        connection_id = openedx_api.get_admin_value('AUTH0_CONNECTION_ID')
+        connection_id = openedx_api.get_admin_value('IDP_CONNECTION_ID')
         if not connection_id:
-            raise ImproperlyConfigured('AUTH0_CONNECTION_ID of type `admin` is needed for each site configuration')
+            raise ImproperlyConfigured('IDP_CONNECTION_ID of type `admin` is needed for each site configuration')
 
         return connection_id
 
@@ -150,9 +150,9 @@ class Auth0ApiClient:
         return data["access_token"]
 
     def _get_auth0_organization_id(self):
-        organization_id = openedx_api.get_admin_value('AUTH0_ORGANIZATION_ID')
+        organization_id = openedx_api.get_admin_value('IDP_ORGANIZATION_ID')
         if not organization_id:
-            raise ImproperlyConfigured('AUTH0_ORGANIZATION_ID config of type `admin` is required for auth0 to work')
+            raise ImproperlyConfigured('IDP_ORGANIZATION_ID config of type `admin` is required for auth0 to work')
         return organization_id
 
     def create_user(self, data):

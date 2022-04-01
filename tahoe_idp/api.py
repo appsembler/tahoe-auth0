@@ -26,7 +26,7 @@ def request_password_reset(email):
     return auth0_api_client.change_password_via_reset_for_db_connection(email)
 
 
-def get_auth0_id_by_user(user):
+def get_tahoe_idp_id_by_user(user):
     """
     Get auth0 unique ID for a Django user.
 
@@ -51,7 +51,7 @@ def update_user(user, properties):
     See: https://auth0.com/docs/api/management/v2#!/Users/patch_users_by_id
     """
     auth0_api_client = Auth0ApiClient()
-    auth0_user_id = get_auth0_id_by_user(user)
+    auth0_user_id = get_tahoe_idp_id_by_user(user)
     return auth0_api_client.update_user(auth0_user_id, properties)
 
 

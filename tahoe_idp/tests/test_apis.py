@@ -8,20 +8,20 @@ from requests import HTTPError
 from social_django.models import UserSocialAuth
 from unittest.mock import patch
 
-from tahoe_auth0.api import (
-    get_auth0_id_by_user,
+from tahoe_idp.api import (
+    get_tahoe_idp_id_by_user,
     request_password_reset,
     update_user,
     update_user_email,
 )
-from tahoe_auth0.constants import BACKEND_NAME
+from tahoe_idp.constants import BACKEND_NAME
 
 
-from .conftest import mock_auth0_api_settings
+from .conftest import mock_tahoe_idp_api_settings
 
 
 pytestmark = pytest.mark.usefixtures(
-    'mock_auth0_settings',
+    'mock_tahoe_idp_settings',
     'transactional_db',
 )
 
@@ -39,9 +39,9 @@ def user_factory(username='myusername', email=None, **kwargs):
     )
 
 
-def auth0_entry_factory(user, social_uid):
+def tahoe_idp_entry_factory(user, social_uid):
     """
-    Create auth0 social entry.
+    Create Tahoe IdP social entry.
     """
     return UserSocialAuth.objects.create(
         user=user,
@@ -55,11 +55,11 @@ def user_with_social_factory(social_uid, user_kwargs=None):
     Create a user with social auth entry.
     """
     user = user_factory(user_kwargs or {})
-    social = auth0_entry_factory(user, social_uid)
+    social = tahoe_idp_entry_factory(user, social_uid)
     return user, social
 
 
-@mock_auth0_api_settings
+@mock_tahoe_idp_api_settings
 def test_password_reset_helper(requests_mock):
     """
     Password reset can be requested.
@@ -76,7 +76,7 @@ def test_password_reset_helper(requests_mock):
     assert response.status_code == 200, 'should succeed: {}'.format(response.content.decode('utf-8'))
 
 
-@mock_auth0_api_settings
+@mock_tahoe_idp_api_settings
 def test_password_reset_helper_unauthorized(requests_mock):
     """
     Ensure an error is raised if something goes wrong.
@@ -93,42 +93,42 @@ def test_password_reset_helper_unauthorized(requests_mock):
         request_password_reset('someone@example.com')
 
 
-def test_get_auth0_id_by_user():
+def test_get_tahoe_idp_id_by_user():
     """
-    Tests for `get_auth0_id_by_user` validation and errors.
+    Tests for `get_tahoe_idp_id_by_user` validation and errors.
     """
-    auth0_id = 'auth0|bd7793e40ca2d0ca'
-    user, social = user_with_social_factory(social_uid=auth0_id)
-    assert get_auth0_id_by_user(user=user) == auth0_id
+    social_id = 'auth0|bd7793e40ca2d0ca'
+    user, social = user_with_social_factory(social_uid=social_id)
+    assert get_tahoe_idp_id_by_user(user=user) == social_id
 
 
-def test_get_auth0_id_by_user_validation():
+def test_get_tahoe_idp_id_by_user_validation():
     """
-    Tests for `get_auth0_id_by_user` validation and errors.
+    Tests for `get_tahoe_idp_id_by_user` validation and errors.
     """
     with pytest.raises(ValueError, match='User should be provided'):
-        get_auth0_id_by_user(user=None)
+        get_tahoe_idp_id_by_user(user=None)
 
     with pytest.raises(ValueError, match='Non-anonymous User should be provided'):
-        get_auth0_id_by_user(user=AnonymousUser())
+        get_tahoe_idp_id_by_user(user=AnonymousUser())
 
     user_without_auth0_id = user_factory()
     with pytest.raises(ObjectDoesNotExist):  # Should fail for malformed data
-        get_auth0_id_by_user(user=user_without_auth0_id)
+        get_tahoe_idp_id_by_user(user=user_without_auth0_id)
 
 
-def test_get_auth0_id_by_user_two_auth0_ids():
+def test_get_tahoe_idp_id_by_user_two_auth0_ids():
     """
-    Tests for `get_auth0_id_by_user` fail for malformed data.
+    Tests for `get_tahoe_idp_id_by_user` fail for malformed data.
     """
     user_with_two_ids = user_factory()
-    auth0_entry_factory(user_with_two_ids, 'test1')
-    auth0_entry_factory(user_with_two_ids, 'test2')
+    tahoe_idp_entry_factory(user_with_two_ids, 'test1')
+    tahoe_idp_entry_factory(user_with_two_ids, 'test2')
     with pytest.raises(MultipleObjectsReturned):  # Should fail for malformed data
-        get_auth0_id_by_user(user=user_with_two_ids)
+        get_tahoe_idp_id_by_user(user=user_with_two_ids)
 
 
-@mock_auth0_api_settings
+@mock_tahoe_idp_api_settings
 def test_update_user_helper(requests_mock):
     """
     Can update user.
@@ -147,7 +147,7 @@ def test_update_user_helper(requests_mock):
     assert response.status_code == 200, 'should succeed: {}'.format(response.content.decode('utf-8'))
 
 
-@mock_auth0_api_settings
+@mock_tahoe_idp_api_settings
 def test_failed_update_user_helper(requests_mock):
     """
     Ensure an error is raised if something goes wrong with `update_user`.
@@ -167,7 +167,7 @@ def test_failed_update_user_helper(requests_mock):
         })
 
 
-@patch('tahoe_auth0.api.update_user')
+@patch('tahoe_idp.api.update_user')
 def test_update_user_email(mock_update_user):
     """
     Test `update_user_email`.
@@ -178,7 +178,7 @@ def test_update_user_email(mock_update_user):
     mock_update_user.assert_called_once_with(user, properties={'email': 'test.email@example.com'})
 
 
-@patch('tahoe_auth0.api.update_user')
+@patch('tahoe_idp.api.update_user')
 def test_update_user_email_verified(mock_update_user):
     """
     Test `update_user_email` with verified.

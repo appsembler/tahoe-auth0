@@ -9,9 +9,9 @@ from unittest.mock import patch
 from httpretty import HTTPretty
 from jose import jwt
 
-from tahoe_auth0.api_client import Auth0ApiClient
-from tahoe_auth0.backend import TahoeAuth0OAuth2
-from tahoe_auth0.tests.oauth import OAuth2Test
+from tahoe_idp.api_client import Auth0ApiClient
+from tahoe_idp.backend import TahoeIdpOAuth2
+from tahoe_idp.tests.oauth import OAuth2Test
 
 JWK_KEY = {
     "kty": "RSA",
@@ -36,9 +36,9 @@ JWK_KEY = {
 JWK_PUBLIC_KEY = {key: value for key, value in JWK_KEY.items() if key != "d"}
 
 
-@pytest.mark.usefixtures('mock_auth0_settings')
+@pytest.mark.usefixtures('mock_tahoe_idp_settings')
 class Auth0Test(OAuth2Test):
-    backend_path = "tahoe_auth0.backend.TahoeAuth0OAuth2"
+    backend_path = "tahoe_idp.backend.TahoeIdpOAuth2"
     domain = "domain.world"
     access_token_body = json.dumps(
         {
@@ -166,7 +166,7 @@ class Auth0Test(OAuth2Test):
     @patch.object(
         Auth0ApiClient, "_get_auth0_organization_id", return_value=organization_id
     )
-    @patch.object(TahoeAuth0OAuth2, "_get_payload")
+    @patch.object(TahoeIdpOAuth2, "_get_payload")
     def test_get_user_id(self, mock_get_payload, *args):
         id_token = self.get_id_token()
         mock_get_payload.return_value = id_token
@@ -179,7 +179,7 @@ class Auth0Test(OAuth2Test):
     @patch.object(
         Auth0ApiClient, "_get_auth0_organization_id", return_value=organization_id
     )
-    @patch.object(TahoeAuth0OAuth2, "_get_payload")
+    @patch.object(TahoeIdpOAuth2, "_get_payload")
     @patch.object(Auth0ApiClient, "get_user")
     def test_get_user_details(self, mock_get_user, *args):
         mock_get_user.return_value = {

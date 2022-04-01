@@ -7,8 +7,8 @@ from requests import Response
 
 from site_config_client.openedx.test_helpers import override_site_config
 
-from tahoe_auth0.api_client import Auth0ApiClient
-from tahoe_auth0.views import RegistrationView
+from tahoe_idp.api_client import Auth0ApiClient
+from tahoe_idp.views import RegistrationView
 
 
 class TestRegistrationView(TestCase):
@@ -30,18 +30,18 @@ class TestRegistrationAPIView(TestCase):
         """
         Method shouldn't be allowed
         """
-        response = self.client.get(reverse("tahoe_auth0:register_api"))
+        response = self.client.get(reverse("tahoe_idp:register_api"))
         self.assertEqual(response.status_code, 405)
 
-    @patch("tahoe_auth0.api_client.helpers.get_auth0_domain")
+    @patch("tahoe_idp.api_client.helpers.get_idp_domain")
     @patch.object(Auth0ApiClient, "_get_access_token")
     @patch.object(Auth0ApiClient, "create_user")
-    def test_post(self, mock_create_user, mock_get_access_token, mock_get_auth0_domain):
+    def test_post(self, mock_create_user, mock_get_access_token, mock_get_idp_domain):
         mock_create_user.return_value = create_mocked_response()
 
         data = {"fid": 43, "bid": 20}
         response = self.client.post(
-            reverse("tahoe_auth0:register_api"),
+            reverse("tahoe_idp:register_api"),
             data=data,
             content_type="application/json",
         )

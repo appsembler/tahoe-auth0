@@ -8,7 +8,7 @@ from httpretty import HTTPretty
 from social_core.backends.utils import load_backends, user_backends_data
 from social_core.utils import PARTIAL_TOKEN_SESSION_NAME, module_member, parse_qs
 
-from tahoe_auth0.tests.models import (
+from tahoe_idp.tests.models import (
     TestAssociation,
     TestCode,
     TestNonce,
@@ -16,7 +16,7 @@ from tahoe_auth0.tests.models import (
     TestUserSocialAuth,
     User,
 )
-from tahoe_auth0.tests.strategy import TestStrategy
+from tahoe_idp.tests.strategy import TestStrategy
 
 
 class BaseBackendTest(TestCase):

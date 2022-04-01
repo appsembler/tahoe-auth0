@@ -5,18 +5,18 @@ from django.apps import AppConfig
 logger = logging.getLogger(__name__)
 
 
-class TahoeAuth0Config(AppConfig):
-    name = "tahoe_auth0"
+class TahoeIdpConfig(AppConfig):
+    name = "tahoe_idp"
     default_auto_field = "django.db.models.BigAutoField"
 
     plugin_app = {
         "url_config": {
             "lms.djangoapp": {
-                "namespace": "tahoe_auth0",
-                "regex": "^tahoeauth0/api/v1/",
+                "namespace": "tahoe_idp",
+                "regex": "^tahoe-idp/api/v1/",
             }
         },
     }
 
     def ready(self):
-        logger.debug("Tahoe Auth0 plugin is ready.")
+        logger.debug("Tahoe IdP plugin is ready.")

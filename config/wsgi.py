@@ -1,5 +1,5 @@
 """
-WSGI config for tahoe_auth0 project.
+WSGI config for tahoe_idp project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 

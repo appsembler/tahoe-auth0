@@ -8,7 +8,7 @@ from social_core.backends.oauth import BaseOAuth2
 
 from .api_client import Auth0ApiClient
 from .constants import BACKEND_NAME
-from .helpers import get_auth0_domain
+from .helpers import get_idp_domain
 
 from .permissions import (
     get_role_with_default,
@@ -17,7 +17,7 @@ from .permissions import (
 )
 
 
-class TahoeAuth0OAuth2(BaseOAuth2):
+class TahoeIdpOAuth2(BaseOAuth2):
     """A python Social Auth OAuth authentication Backend hooked with Auth0"""
 
     name = BACKEND_NAME
@@ -51,10 +51,10 @@ class TahoeAuth0OAuth2(BaseOAuth2):
         """
         id_token = response.get("id_token")
 
-        issuer = "https://{}/".format(get_auth0_domain())
+        issuer = "https://{}/".format(get_idp_domain())
         audience = self.setting("KEY")  # CLIENT_ID
         jwks = request.urlopen(  # nosec
-            "https://{}/.well-known/jwks.json".format(get_auth0_domain())
+            "https://{}/.well-known/jwks.json".format(get_idp_domain())
         )
 
         return jwt.decode(
@@ -74,19 +74,19 @@ class TahoeAuth0OAuth2(BaseOAuth2):
         If we decide against this, we need to enable `Display Organization Prompt` in
         Auth0 Management Console.
         """
-        params = super(TahoeAuth0OAuth2, self).auth_params(state=state)
+        params = super().auth_params(state=state)
         params["organization"] = self.client.organization_id
 
         return params
 
     def authorization_url(self):
-        return "https://{}/authorize".format(get_auth0_domain())
+        return "https://{}/authorize".format(get_idp_domain())
 
     def access_token_url(self):
-        return "https://{}/oauth/token".format(get_auth0_domain())
+        return "https://{}/oauth/token".format(get_idp_domain())
 
     def revoke_token_url(self, token, uid):
-        return "https://{}/logout".format(get_auth0_domain())
+        return "https://{}/logout".format(get_idp_domain())
 
     def get_user_id(self, details, response):
         """
