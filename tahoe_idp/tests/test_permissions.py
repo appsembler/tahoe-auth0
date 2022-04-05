@@ -2,7 +2,7 @@
 Tests for the permission module.
 """
 
-from tahoe_auth0.permissions import (
+from tahoe_idp.permissions import (
     get_role_with_default,
     is_organization_admin,
     is_organization_staff,

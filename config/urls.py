@@ -18,7 +18,7 @@ from django.conf.urls.static import static
 from django.urls import include, path
 
 urlpatterns = [
-    path("", include(("tahoe_auth0.urls", "tahoe_auth0"), namespace="tahoe_auth0")),
+    path("", include(("tahoe_idp.urls", "tahoe_idp"), namespace="tahoe_idp")),
     # Matches edX Platform
     path("auth/", include("social_django.urls", namespace="social")),
 ]

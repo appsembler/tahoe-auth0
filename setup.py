@@ -1,22 +1,22 @@
 import setuptools
 
-import tahoe_auth0
+import tahoe_idp
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 
 setuptools.setup(
-    name="tahoe-auth0",
-    version=tahoe_auth0.__version__,
+    name="tahoe-idp",
+    version=tahoe_idp.__version__,
     author="Appsembler",
     author_email="ops@appsembler.com",
-    description="Auth0 user authentication package for Tahoe.",
+    description="Tahoe IdP user authentication package for Tahoe.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/appsembler/tahoe-auth0",
+    url="https://github.com/appsembler/tahoe-idp",
     project_urls={
-        "Bug Tracker": "https://github.com/appsembler/tahoe-auth0/issues",
+        "Bug Tracker": "https://github.com/appsembler/tahoe-idp/issues",
     },
     classifiers=[
         "Development Status :: 1 - Planning",
@@ -31,12 +31,12 @@ setuptools.setup(
     ],
     python_requires=">=3.5",
     packages=setuptools.find_packages(
-        include=["tahoe_auth0", "tahoe_auth0.*"],
-        exclude=["tahoe_auth0.tests", "config", "registration", "templates"],
+        include=["tahoe_idp", "tahoe_idp.*"],
+        exclude=["tahoe_idp.tests", "config", "registration", "templates"],
     ),
     entry_points={
         "lms.djangoapp": [
-            "tahoe_auth0 = tahoe_auth0.apps:TahoeAuth0Config",
+            "tahoe_idp = tahoe_idp.apps:TahoeIdpConfig",
         ],
         "cms.djangoapp": [],
     },

@@ -1,5 +1,5 @@
 """
-ASGI config for tahoe_auth0 project.
+ASGI config for tahoe_idp project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
