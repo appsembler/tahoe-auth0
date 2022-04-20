@@ -34,7 +34,9 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "django.contrib.sites",
     "django.contrib.staticfiles",
+    "organizations",
     "social_django",
     "tahoe_idp",
 ]
@@ -134,6 +136,7 @@ SOCIAL_AUTH0_IDP_SCOPE = ["openid", "profile", "email"]
 
 AUTHENTICATION_BACKENDS = {
     "tahoe_idp.backend.TahoeIdpOAuth2",
+    "tahoe_idp.backend.StudioTahoeIdpOAuth2",
     "django.contrib.auth.backends.ModelBackend",
 }
 

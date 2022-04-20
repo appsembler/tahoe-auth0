@@ -1,16 +1,17 @@
 import logging
 import urllib.parse
 
+import crum
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-
-
+from django.shortcuts import redirect
+from rest_framework.utils.urls import replace_query_param
 from site_config_client.openedx import api as config_client_api
 
 logger = logging.getLogger(__name__)
 
 
-def is_tahoe_idp_enabled():
+def is_tahoe_idp_enabled(site_configuration=None):
     """
     A helper method that checks if Tahoe IdP is enabled or not.
 
@@ -24,7 +25,7 @@ def is_tahoe_idp_enabled():
     Raises `ImproperlyConfigured` if the configuration not correct.
     """
 
-    is_flag_enabled = config_client_api.get_admin_value("ENABLE_TAHOE_IDP")
+    is_flag_enabled = config_client_api.get_admin_value("ENABLE_TAHOE_IDP", site_configuration=site_configuration)
 
     if is_flag_enabled is None:
         is_flag_enabled = settings.FEATURES.get("ENABLE_TAHOE_IDP", False)
@@ -52,21 +53,21 @@ def is_tahoe_idp_enabled():
     return is_flag_enabled
 
 
-def fail_if_tahoe_idp_not_enabled():
+def fail_if_tahoe_idp_not_enabled(site_configuration=None):
     """
     A helper that makes sure Tahoe IdP is enabled or throw an EnvironmentError.
     """
-    if not is_tahoe_idp_enabled():
+    if not is_tahoe_idp_enabled(site_configuration=site_configuration):
         raise EnvironmentError("Tahoe IdP is not enabled in your project")
 
 
-def get_idp_domain():
+def get_idp_domain(site_configuration=None):
     """
     A property method used to fetch IdP domain from Django's settings variable.
 
     We will raise an ImproperlyConfigured error if we couldn't find the setting.
     """
-    fail_if_tahoe_idp_not_enabled()
+    fail_if_tahoe_idp_not_enabled(site_configuration=site_configuration)
     domain = settings.TAHOE_IDP_CONFIGS.get("DOMAIN")
 
     if not domain:
@@ -75,13 +76,13 @@ def get_idp_domain():
     return domain
 
 
-def get_client_info():
+def get_client_info(site_configuration=None):
     """
     A helper method responsible for fetching the access token and the client secret
     from Django settings.FEATURES.
     If either value does not exist, we will raise an ImproperlyConfigured error.
     """
-    fail_if_tahoe_idp_not_enabled()
+    fail_if_tahoe_idp_not_enabled(site_configuration=site_configuration)
     client_id = settings.TAHOE_IDP_CONFIGS.get("API_CLIENT_ID")
     client_secret = settings.TAHOE_IDP_CONFIGS.get("API_CLIENT_SECRET")
 
@@ -105,3 +106,33 @@ def build_auth0_query(**kwargs):
         for key, value in kwargs.items()
     ]
     return "&".join(args)
+
+
+def get_lms_login_url(next_url='/'):
+    """
+    Use get_studio_site to get the URL to LMS login page
+
+    :param next_url: next parameter to be added to the URL
+    :return: LMS login URL related to the current organization
+    """
+    # Avoid circular dependencies
+    from tahoe_idp.api import get_studio_site
+
+    lms_login_url = '{scheme}://{domain_name}/auth/login/tahoe-idp/'.format(
+        scheme=crum.get_current_request().scheme,
+        domain_name=get_studio_site().domain,
+    )
+    lms_login_url = replace_query_param(lms_login_url, 'auth_entry', 'login')
+    lms_login_url = replace_query_param(lms_login_url, 'next', next_url)
+
+    return lms_login_url
+
+
+def redirect_to_lms_login(next_url='/'):
+    """
+    Get LMS login URL using get_lms_login_url and redirect to it
+
+    :param next_url: next parameter to be added to the URL
+    :return: Response
+    """
+    return redirect(get_lms_login_url(next_url=next_url), perminant=False)

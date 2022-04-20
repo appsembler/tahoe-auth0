@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>No Studio Access</title>
+  <link rel="shortcut icon"
+        href="https://appsembler.com/wp-content/themes/appsembler-2017/images/icons/favicon.ico">
+</head>
+<body onload="check_redirect()">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<div style="text-align: center;">
+    <h1 >Oops!</h1>
+    <h3>You don't have Studio Access to {{ organization_name }} organization</h3>
+    <h3>To access Studio, you need to have the CourseStaff permission.
+        Please ask your administrator to grant you this role</h3>
+    <br>
+    <h3>You'll be redirected to LMS in <span id="seconds-remaining"></span> seconds</h3>
+
+    <h4><a href="{{ lms_url }}">Redirect to LMS now</a></h4>
+</div>
+<script>
+    var now_counting = Date.now();
+
+    function check_redirect() {
+        var elapsed = (Date.now() - now_counting) / 1000;
+        var remaining = (9 - elapsed).toFixed();
+
+        if (remaining > 0) {
+            $('#seconds-remaining').text(remaining);
+            setTimeout(check_redirect, 1000)
+        }
+        else {
+            window.location.replace("{{ lms_url }}");
+        }
+    }
+</script>

@@ -1,24 +1,28 @@
 """
 Tests for the external `api` helpers module.
 """
+import uuid
+from unittest.mock import patch, Mock
+
 import pytest
 from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.test.client import RequestFactory
 from requests import HTTPError
 from social_django.models import UserSocialAuth
-from unittest.mock import patch
-
 from tahoe_idp.api import (
+    get_studio_site,
+    get_studio_site_configuration,
     get_tahoe_idp_id_by_user,
     request_password_reset,
+    save_studio_site_uuid_in_session,
+    TahoeIdpStudioException,
     update_user,
     update_user_email,
 )
 from tahoe_idp.constants import BACKEND_NAME
 
-
 from .conftest import mock_tahoe_idp_api_settings
-
 
 pytestmark = pytest.mark.usefixtures(
     'mock_tahoe_idp_settings',
@@ -37,6 +41,15 @@ def user_factory(username='myusername', email=None, **kwargs):
         username=username,
         **kwargs,
     )
+
+
+def studio_request_factory(studio_site_uuid=None):
+    if studio_site_uuid is None:
+        studio_site_uuid = str(uuid.uuid4())
+
+    request = RequestFactory().get('dummy.com', {'studio_site_uuid': studio_site_uuid})
+    request.session = {}
+    return request
 
 
 def tahoe_idp_entry_factory(user, social_uid):
@@ -190,3 +203,108 @@ def test_update_user_email_verified(mock_update_user):
         'email': 'test.email@example.com',
         'email_verified': True,
     })
+
+
+def test_get_studio_site_no_session():
+    """
+    Verify that get_studio_site raises TahoeIdpMissingStudioException when session or studio_site_uuid is missing
+    """
+    request = studio_request_factory()
+    error_msg = 'get_studio_site did not find a session in the request!'
+
+    with patch('tahoe_idp.api.crum.get_current_request', return_value=request):
+        request.session = None
+        with pytest.raises(TahoeIdpStudioException, match=error_msg):
+            get_studio_site()
+
+        del request.session
+        with pytest.raises(TahoeIdpStudioException, match=error_msg):
+            get_studio_site()
+
+
+def test_get_studio_site_no_uuid():
+    """
+    Verify that get_studio_site raises TahoeIdpMissingStudioException when session or studio_site_uuid is missing
+    """
+    request = studio_request_factory()
+    error_msg = 'get_studio_site did not find studio_site_uuid in the session!'
+
+    with patch('tahoe_idp.api.crum.get_current_request', return_value=request):
+        with pytest.raises(TahoeIdpStudioException, match=error_msg):
+            get_studio_site()
+
+        request.session['studio_site_uuid'] = None
+        with pytest.raises(TahoeIdpStudioException, match=error_msg):
+            get_studio_site()
+
+
+@patch('tahoe_idp.api.crum.get_current_request', Mock(return_value=Mock(session={'studio_site_uuid': 'dummy_uuid'})))
+@patch('tahoe_idp.api.get_site_by_uuid', Mock(return_value=Mock(check_id=99)))
+def test_get_studio_site_success():
+    """
+    Verify that get_studio_site returns the correct site
+    """
+    assert get_studio_site().check_id == 99
+
+
+@pytest.mark.parametrize('current_site', [Mock({}), Mock(configuration=None)])
+def test_get_studio_site_configuration_no_or_none_configuration(current_site):
+    """
+    Verify that get_studio_site_configuration raises TahoeIdpMissingStudioException when the current studio
+    site does not have a configuration
+    """
+    with patch('tahoe_idp.api.get_studio_site', return_value=current_site):
+        with pytest.raises(
+            TahoeIdpStudioException,
+            match='get_studio_site_configuration did not a valid site configuration!'
+        ):
+            get_studio_site_configuration()
+
+
+@patch('tahoe_idp.api.get_studio_site', Mock(return_value=Mock(configuration=Mock(check_id=99))))
+def test_get_studio_site_configuration_success():
+    """
+    Verify that get_studio_site_configuration returns the correct site configuration
+    """
+    assert get_studio_site_configuration().check_id == 99
+
+
+def test_save_studio_site_uuid_in_session_no_session():
+    """
+    Verify that save_studio_site_uuid_in_session returns None if the session is missing
+    """
+    request = studio_request_factory()
+
+    request.session = None
+    with patch('tahoe_idp.api.crum.get_current_request', return_value=request):
+        assert save_studio_site_uuid_in_session(studio_site_uuid='any uuid') is None
+
+    del request.session
+    with patch('tahoe_idp.api.crum.get_current_request', return_value=request):
+        assert save_studio_site_uuid_in_session(studio_site_uuid='any uuid') is None
+    assert not hasattr(request, 'session')
+
+
+def test_save_studio_site_uuid_in_session_invalid_uuid():
+    """
+    Verify that save_studio_site_uuid_in_session returns None if the session is missing
+    """
+    request = studio_request_factory()
+
+    with patch('tahoe_idp.api.crum.get_current_request', return_value=request):
+        with pytest.raises(ValueError, match=r'Invalid site uuid cannot be saved in session! \(invalid uuid\)'):
+            assert save_studio_site_uuid_in_session(studio_site_uuid='invalid uuid') is None
+
+
+def test_save_studio_site_uuid_in_session_success():
+    """
+    Verify that save_studio_site_uuid_in_session saves studio_site_uuid value in session correctly
+    """
+    studio_site_uuid = str(uuid.uuid4())
+    request = studio_request_factory(studio_site_uuid)
+
+    with patch('tahoe_idp.api.crum.get_current_request', return_value=request):
+        with patch('tahoe_idp.api.get_site_by_uuid'):
+            assert save_studio_site_uuid_in_session(studio_site_uuid=studio_site_uuid) == studio_site_uuid
+
+    assert request.session['studio_site_uuid'] == studio_site_uuid

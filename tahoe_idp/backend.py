@@ -3,13 +3,18 @@ Auth0 backend.
 """
 from urllib import request
 
+from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
+from django.urls import reverse
 from jose import jwt
 from social_core.backends.oauth import BaseOAuth2
+from social_core.utils import handle_http_errors
+from tahoe_idp.api import get_studio_site, get_studio_site_configuration
 
+from tahoe_sites.api import get_organization_by_site, is_active_admin_on_organization
 from .api_client import Auth0ApiClient
 from .constants import BACKEND_NAME
 from .helpers import get_idp_domain
-
 from .permissions import (
     get_role_with_default,
     is_organization_admin,
@@ -29,6 +34,10 @@ class TahoeIdpOAuth2(BaseOAuth2):
     @property
     def client(self):
         return Auth0ApiClient()
+
+    @property
+    def idp_domain(self):
+        return get_idp_domain()
 
     def _get_payload(self, response):
         """
@@ -51,10 +60,10 @@ class TahoeIdpOAuth2(BaseOAuth2):
         """
         id_token = response.get("id_token")
 
-        issuer = "https://{}/".format(get_idp_domain())
+        issuer = "https://{}/".format(self.idp_domain)
         audience = self.setting("KEY")  # CLIENT_ID
         jwks = request.urlopen(  # nosec
-            "https://{}/.well-known/jwks.json".format(get_idp_domain())
+            "https://{}/.well-known/jwks.json".format(self.idp_domain)
         )
 
         return jwt.decode(
@@ -76,17 +85,16 @@ class TahoeIdpOAuth2(BaseOAuth2):
         """
         params = super().auth_params(state=state)
         params["organization"] = self.client.organization_id
-
         return params
 
     def authorization_url(self):
-        return "https://{}/authorize".format(get_idp_domain())
+        return "https://{}/authorize".format(self.idp_domain)
 
     def access_token_url(self):
-        return "https://{}/oauth/token".format(get_idp_domain())
+        return "https://{}/oauth/token".format(self.idp_domain)
 
     def revoke_token_url(self, token, uid):
-        return "https://{}/logout".format(get_idp_domain())
+        return "https://{}/logout".format(self.idp_domain)
 
     def get_user_id(self, details, response):
         """
@@ -116,8 +124,8 @@ class TahoeIdpOAuth2(BaseOAuth2):
             "fullname": fullname,
             "first_name": first_name,
             "last_name": last_name,
-            "auth0_is_organization_admin": is_organization_admin(metadata_role),
-            "auth0_is_organization_staff": is_organization_staff(metadata_role),
+            "tahoe_idp_is_organization_admin": is_organization_admin(metadata_role),
+            "tahoe_idp_is_organization_staff": is_organization_staff(metadata_role),
         }
 
     def get_user_details(self, response):
@@ -127,3 +135,37 @@ class TahoeIdpOAuth2(BaseOAuth2):
         jwt_payload = self._get_payload(response)
         auth0_user = self.client.get_user(jwt_payload["email"])
         return self._build_user_details(jwt_payload=jwt_payload, auth0_user=auth0_user)
+
+
+class StudioTahoeIdpOAuth2(TahoeIdpOAuth2):
+    """
+    Backend for studio
+    """
+    @property
+    def client(self):
+        return Auth0ApiClient(site_configuration=get_studio_site_configuration())
+
+    @property
+    def idp_domain(self):
+        return get_idp_domain(site_configuration=get_studio_site_configuration())
+
+    @handle_http_errors
+    def do_auth(self, access_token, *args, **kwargs):
+        """
+        Override to allow only staff and admin users
+        """
+        result = super(StudioTahoeIdpOAuth2, self).do_auth(access_token=access_token, *args, **kwargs)
+
+        if isinstance(result, HttpResponseRedirect):
+            if result.url == '/register':
+                return self.redirect_to_lms_login(next_url='/studio')
+            return result
+
+        if result.is_active and (result.is_superuser or result.is_staff):
+            return result
+
+        organization = get_organization_by_site(get_studio_site())
+        if not is_active_admin_on_organization(user=result, organization=organization):
+            return redirect(reverse('tahoe_idp:no_studio_access'), perminant=False)
+
+        return result

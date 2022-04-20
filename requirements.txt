@@ -24,3 +24,7 @@ pytest-django
 pytest-cov
 unittest2
 ddt
+tahoe-sites==0.1.6
+edx-organizations==5.2.0
+django-model-utils<=4.0.0
+edx-opaque-keys<=2.0.2

@@ -37,7 +37,7 @@ JWK_PUBLIC_KEY = {key: value for key, value in JWK_KEY.items() if key != "d"}
 
 
 @pytest.mark.usefixtures('mock_tahoe_idp_settings')
-class Auth0Test(OAuth2Test):
+class Auth0TestLMS(OAuth2Test):
     backend_path = "tahoe_idp.backend.TahoeIdpOAuth2"
     domain = "domain.world"
     access_token_body = json.dumps(
@@ -200,8 +200,8 @@ class Auth0Test(OAuth2Test):
                 "fullname": "Ahmed Jazzar",
                 "first_name": "Ahmed",
                 "last_name": "Jazzar",
-                "auth0_is_organization_admin": False,
-                "auth0_is_organization_staff": True,
+                "tahoe_idp_is_organization_admin": False,
+                "tahoe_idp_is_organization_staff": True,
             },
         )
 
@@ -233,8 +233,8 @@ class Auth0Test(OAuth2Test):
                 "fullname": "Ahmed Jazzar",
                 "first_name": "Ahmed",
                 "last_name": "Jazzar",
-                "auth0_is_organization_admin": False,
-                "auth0_is_organization_staff": False,
+                "tahoe_idp_is_organization_admin": False,
+                "tahoe_idp_is_organization_staff": False,
             },
         )
 

@@ -15,9 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 class Auth0ApiClient:
-    def __init__(self, request_timeout=10):
+    def __init__(self, request_timeout=10, site_configuration=None):
         self.request_timeout = request_timeout
-        self.domain = helpers.get_idp_domain()
+        self.site_configuration = site_configuration
+        self.domain = helpers.get_idp_domain(site_configuration=self.site_configuration)
         self.access_token = self._get_access_token()
 
     @property
@@ -55,7 +56,7 @@ class Auth0ApiClient:
         """
         Return the organization connection ID from configuration.
         """
-        connection_id = openedx_api.get_admin_value('IDP_CONNECTION_ID')
+        connection_id = openedx_api.get_admin_value('IDP_CONNECTION_ID', site_configuration=self.site_configuration)
         if not connection_id:
             raise ImproperlyConfigured('IDP_CONNECTION_ID of type `admin` is needed for each site configuration')
 
@@ -69,7 +70,7 @@ class Auth0ApiClient:
 
         logger.debug("Starting password reset for user %s in connection: %s", email, connection)
 
-        client_id, _client_secret = helpers.get_client_info()
+        client_id, _client_secret = helpers.get_client_info(site_configuration=self.site_configuration)
         resp = requests.post(
             self.change_password_via_reset_url,
             json={
@@ -100,7 +101,7 @@ class Auth0ApiClient:
 
         logger.debug("Updating properties of user %s in connection: %s", auth0_user_id, connection)
 
-        client_id, _client_secret = helpers.get_client_info()
+        client_id, _client_secret = helpers.get_client_info(site_configuration=self.site_configuration)
         resp = requests.patch(
             users_api_url,
             json={
@@ -128,7 +129,7 @@ class Auth0ApiClient:
         data from Auth0.
         """
 
-        client_id, client_secret = helpers.get_client_info()
+        client_id, client_secret = helpers.get_client_info(site_configuration=self.site_configuration)
         headers = {"content-type": "application/x-www-form-urlencoded"}
         data = {
             "grant_type": "client_credentials",
@@ -150,7 +151,7 @@ class Auth0ApiClient:
         return data["access_token"]
 
     def _get_auth0_organization_id(self):
-        organization_id = openedx_api.get_admin_value('IDP_ORGANIZATION_ID')
+        organization_id = openedx_api.get_admin_value('IDP_ORGANIZATION_ID', site_configuration=self.site_configuration)
         if not organization_id:
             raise ImproperlyConfigured('IDP_ORGANIZATION_ID config of type `admin` is required for auth0 to work')
         return organization_id
