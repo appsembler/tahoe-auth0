@@ -1,13 +1,15 @@
 """
 Tests for the external `api` helpers module.
 """
+import uuid
+from unittest.mock import patch
+
 import pytest
 from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.test.client import RequestFactory
 from requests import HTTPError
 from social_django.models import UserSocialAuth
-from unittest.mock import patch
-
 from tahoe_idp.api import (
     get_tahoe_idp_id_by_user,
     request_password_reset,
@@ -16,9 +18,7 @@ from tahoe_idp.api import (
 )
 from tahoe_idp.constants import BACKEND_NAME
 
-
 from .conftest import mock_tahoe_idp_api_settings
-
 
 pytestmark = pytest.mark.usefixtures(
     'mock_tahoe_idp_settings',
@@ -37,6 +37,15 @@ def user_factory(username='myusername', email=None, **kwargs):
         username=username,
         **kwargs,
     )
+
+
+def studio_request_factory(studio_site_uuid=None):
+    if studio_site_uuid is None:
+        studio_site_uuid = str(uuid.uuid4())
+
+    request = RequestFactory().get('dummy.com', {'studio_site_uuid': studio_site_uuid})
+    request.session = {}
+    return request
 
 
 def tahoe_idp_entry_factory(user, social_uid):

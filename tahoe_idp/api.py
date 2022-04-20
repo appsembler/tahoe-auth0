@@ -18,6 +18,10 @@ from .constants import BACKEND_NAME
 from . import helpers
 
 
+class TahoeIdpStudioException(AttributeError):
+    pass
+
+
 def request_password_reset(email):
     """
     Start password reset email for Username|Password Database Connection users.

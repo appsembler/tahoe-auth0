@@ -10,11 +10,10 @@ from site_config_client.openedx import api as config_client_api
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-
 logger = logging.getLogger(__name__)
 
 
-def is_tahoe_idp_enabled():
+def is_tahoe_idp_enabled(site_configuration=None):
     """
     A helper method that checks if Tahoe IdP is enabled or not.
 
@@ -28,7 +27,7 @@ def is_tahoe_idp_enabled():
     Raises `ImproperlyConfigured` if the configuration not correct.
     """
 
-    is_flag_enabled = config_client_api.get_admin_value("ENABLE_TAHOE_IDP")
+    is_flag_enabled = config_client_api.get_admin_value("ENABLE_TAHOE_IDP", site_configuration=site_configuration)
 
     if is_flag_enabled is None:
         is_flag_enabled = settings.FEATURES.get("ENABLE_TAHOE_IDP", False)
@@ -56,11 +55,11 @@ def is_tahoe_idp_enabled():
     return is_flag_enabled
 
 
-def fail_if_tahoe_idp_not_enabled():
+def fail_if_tahoe_idp_not_enabled(site_configuration=None):
     """
     A helper that makes sure Tahoe IdP is enabled or throw an EnvironmentError.
     """
-    if not is_tahoe_idp_enabled():
+    if not is_tahoe_idp_enabled(site_configuration=site_configuration):
         raise EnvironmentError("Tahoe IdP is not enabled in your project")
 
 

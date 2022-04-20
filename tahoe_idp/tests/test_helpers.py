@@ -132,9 +132,9 @@ class TestTahoeIdPEnabledHelper(TestCase):
         with self.assertRaises(EnvironmentError):
             fail_if_tahoe_idp_not_enabled()
 
-        mock_is_tahoe_idp_enabled.assert_called_once_with()
+        mock_is_tahoe_idp_enabled.assert_called_once_with(site_configuration=None)
 
     @patch("tahoe_idp.helpers.is_tahoe_idp_enabled", return_value=True)
     def test_enabled(self, mock_is_tahoe_idp_enabled):
         fail_if_tahoe_idp_not_enabled()
-        mock_is_tahoe_idp_enabled.assert_called_once_with()
+        mock_is_tahoe_idp_enabled.assert_called_once_with(site_configuration=None)

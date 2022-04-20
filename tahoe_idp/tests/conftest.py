@@ -16,7 +16,7 @@ def mock_tahoe_idp_settings(monkeypatch, settings):
     """
     Mock configs to enable Tahoe IdP and set TAHOE_IDP_CONFIGS.
     """
-    def mock_is_tahoe_idp_enabled():
+    def mock_is_tahoe_idp_enabled(site_configuration=None):
         """Mock for `is_tahoe_idp_enabled` to return always True."""
         return True
 
