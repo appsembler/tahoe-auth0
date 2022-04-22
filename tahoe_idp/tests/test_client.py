@@ -157,10 +157,10 @@ class TestAuth0ApiClient(TestCase):
 
 
 @patch("tahoe_idp.api_client.requests.post")
-@patch("tahoe_idp.api_client.helpers.get_idp_domain")
+@patch("tahoe_idp.api_client.helpers.get_idp_base_url")
 @patch("tahoe_idp.api_client.helpers.get_client_info")
 def test_get_access_token(
-    mock_get_client_info, mock_get_idp_domain, mock_post
+    mock_get_client_info, mock_get_idp_base_url, mock_post
 ):
     client_id = "client"
     client_secret = "secret"

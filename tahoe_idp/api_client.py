@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class Auth0ApiClient:
     def __init__(self, request_timeout=10):
         self.request_timeout = request_timeout
-        self.domain = helpers.get_idp_domain()
+        self.domain = helpers.get_idp_base_url()
         self.access_token = self._get_access_token()
 
     @property

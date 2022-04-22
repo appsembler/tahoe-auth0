@@ -33,10 +33,10 @@ class TestRegistrationAPIView(TestCase):
         response = self.client.get(reverse("tahoe_idp:register_api"))
         self.assertEqual(response.status_code, 405)
 
-    @patch("tahoe_idp.api_client.helpers.get_idp_domain")
+    @patch("tahoe_idp.api_client.helpers.get_idp_base_url")
     @patch.object(Auth0ApiClient, "_get_access_token")
     @patch.object(Auth0ApiClient, "create_user")
-    def test_post(self, mock_create_user, mock_get_access_token, mock_get_idp_domain):
+    def test_post(self, mock_create_user, mock_get_access_token, mock_get_idp_base_url):
         mock_create_user.return_value = create_mocked_response()
 
         data = {"fid": 43, "bid": 20}

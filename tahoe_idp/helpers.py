@@ -60,14 +60,14 @@ def fail_if_tahoe_idp_not_enabled():
         raise EnvironmentError("Tahoe IdP is not enabled in your project")
 
 
-def get_idp_domain():
+def get_idp_base_url():
     """
     A property method used to fetch IdP domain from Django's settings variable.
 
     We will raise an ImproperlyConfigured error if we couldn't find the setting.
     """
     fail_if_tahoe_idp_not_enabled()
-    domain = settings.TAHOE_IDP_CONFIGS.get("DOMAIN")
+    domain = settings.TAHOE_IDP_CONFIGS.get("BASE_URL")
 
     if not domain:
         raise ImproperlyConfigured("Tahoe IdP `DOMAIN` cannot be empty")

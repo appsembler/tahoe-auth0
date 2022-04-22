@@ -8,7 +8,7 @@ from social_core.backends.oauth import BaseOAuth2
 
 from .api_client import Auth0ApiClient
 from .constants import BACKEND_NAME
-from .helpers import get_idp_domain
+from .helpers import get_idp_base_url
 
 from .permissions import (
     get_role_with_default,
@@ -42,10 +42,10 @@ def get_jwt_payload(client_id, response):
     """
     id_token = response.get("id_token")
 
-    issuer = "https://{}/".format(get_idp_domain())
+    issuer = "{}/".format(get_idp_base_url())
     audience = client_id
     jwks = request.urlopen(  # nosec
-        "https://{}/.well-known/jwks.json".format(get_idp_domain())
+        "{}/.well-known/jwks.json".format(get_idp_base_url())
     )
 
     return jwt.decode(
@@ -78,13 +78,13 @@ class TahoeFusionAuthOAuth2(BaseOAuth2):
         return params
 
     def authorization_url(self):
-        return "https://{}/authorize".format(get_idp_domain())
+        return "{}/oauth2/authorize".format(get_idp_base_url())
 
     def access_token_url(self):
-        return "https://{}/oauth/token".format(get_idp_domain())
+        return "{}/oauth/token".format(get_idp_base_url())
 
     def revoke_token_url(self, token, uid):
-        return "https://{}/logout".format(get_idp_domain())
+        return "{}/oauth2/logout".format(get_idp_base_url())
 
     def get_user_id(self, details, response):
         """
