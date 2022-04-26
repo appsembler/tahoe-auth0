@@ -14,24 +14,27 @@ from . import helpers
 logger = logging.getLogger(__name__)
 
 
-class Auth0ApiClient:
+class FusionAuthApiClient:
     def __init__(self, request_timeout=10):
         self.request_timeout = request_timeout
-        self.domain = helpers.get_idp_base_url()
-        self.access_token = self._get_access_token()
+        self.base_url = helpers.get_idp_base_url()
 
     @property
     def token_url(self):
-        return "https://{}/oauth/token".format(self.domain)
+        return "{}/oauth2/token".format(self.base_url)
+
+    @property
+    def access_token(self):
+        return self._get_access_token()
 
     @property
     def users_url(self):
-        return "https://{}/api/v2/users".format(self.domain)
+        return "{}/api/v2/users".format(self.base_url)
 
     @property
     def change_password_via_reset_url(self):
         # This API uses the legacy password reset call, because api/v2 don't provide a way to reset yet.
-        return "https://{}/dbconnections/change_password".format(self.domain)
+        return "{}/dbconnections/change_password".format(self.base_url)
 
     @property
     def api_headers(self):
@@ -45,11 +48,12 @@ class Auth0ApiClient:
 
     @property
     def api_identifier(self):
-        return "https://{}/api/v2/".format(self.domain)
+        return "{}/api/v2/".format(self.base_url)
 
     @property
     def organization_id(self):
-        return self._get_auth0_organization_id()
+        return "9ad12141-fc3c-0567-f848-78ff21c85243"  # tenant
+        # return self._get_auth0_organization_id()
 
     def get_connection(self):
         """
@@ -91,8 +95,8 @@ class Auth0ApiClient:
 
         See: https://auth0.com/docs/api/management/v2#!/Users/patch_users_by_id
         """
-        users_api_url = 'https://{domain}/api/v2/users/{user_id}'.format(
-            domain=self.domain,
+        users_api_url = '{domain}/api/v2/users/{user_id}'.format(
+            domain=self.base_url,
             user_id=auth0_user_id,
         )
 

@@ -14,7 +14,7 @@ External Python API helpers goes here.
 
 from social_django.models import UserSocialAuth
 
-from .api_client import Auth0ApiClient
+from .api_client import FusionAuthApiClient
 from .constants import BACKEND_NAME
 
 
@@ -22,7 +22,7 @@ def request_password_reset(email):
     """
     Start password reset email for Username|Password Database Connection users.
     """
-    auth0_api_client = Auth0ApiClient()
+    auth0_api_client = FusionAuthApiClient()
     return auth0_api_client.change_password_via_reset_for_db_connection(email)
 
 
@@ -50,7 +50,7 @@ def update_user(user, properties):
 
     See: https://auth0.com/docs/api/management/v2#!/Users/patch_users_by_id
     """
-    auth0_api_client = Auth0ApiClient()
+    auth0_api_client = FusionAuthApiClient()
     auth0_user_id = get_tahoe_idp_id_by_user(user)
     return auth0_api_client.update_user(auth0_user_id, properties)
 

@@ -5,28 +5,28 @@ from unittest.mock import patch, Mock
 from django.test import TestCase
 
 from site_config_client.openedx.test_helpers import override_site_config
-from tahoe_idp.api_client import Auth0ApiClient
+from tahoe_idp.api_client import FusionAuthApiClient
 from .conftest import mock_tahoe_idp_api_settings
 
 
-@patch.object(Auth0ApiClient, "_get_access_token", Mock(return_value='xyz-token'))
+@patch.object(FusionAuthApiClient, "_get_access_token", Mock(return_value='xyz-token'))
 @pytest.mark.usefixtures('mock_tahoe_idp_settings')
-class TestAuth0ApiClient(TestCase):
+class TestFusionAuthApiClient(TestCase):
     def test_init(self):
-        client = Auth0ApiClient()
+        client = FusionAuthApiClient()
         self.assertEqual(client.domain, 'domain.world')
         self.assertEqual(client.access_token, 'xyz-token')
 
     def test_token_url(self):
-        client = Auth0ApiClient()
+        client = FusionAuthApiClient()
         self.assertEqual(client.token_url, "https://domain.world/oauth/token")
 
     def test_users_url(self):
-        client = Auth0ApiClient()
+        client = FusionAuthApiClient()
         self.assertEqual(client.users_url, "https://domain.world/api/v2/users")
 
     def test_api_headers(self):
-        client = Auth0ApiClient()
+        client = FusionAuthApiClient()
         self.assertEqual(
             client.api_headers,
             {
@@ -36,12 +36,12 @@ class TestAuth0ApiClient(TestCase):
         )
 
     def test_api_identifier(self):
-        client = Auth0ApiClient()
+        client = FusionAuthApiClient()
         self.assertEqual(client.api_identifier, "https://domain.world/api/v2/")
 
-    @patch.object(Auth0ApiClient, "_get_auth0_organization_id")
+    @patch.object(FusionAuthApiClient, "_get_auth0_organization_id")
     def test_organization_id(self, mock_get_auth0_organization_id):
-        client = Auth0ApiClient()
+        client = FusionAuthApiClient()
         oid = client.organization_id
 
         mock_get_auth0_organization_id.assert_called_once_with()
@@ -49,39 +49,39 @@ class TestAuth0ApiClient(TestCase):
 
     @override_site_config('admin', IDP_CONNECTION_ID='con-testxyzid')
     def test_get_connection(self):
-        client = Auth0ApiClient()
+        client = FusionAuthApiClient()
         self.assertEqual(client.get_connection(), 'con-testxyzid')
 
     @override_site_config('admin', SOME_CONFIG='test')
     def test_get_missing_connection_id(self):
-        client = Auth0ApiClient()
+        client = FusionAuthApiClient()
         with pytest.raises(ImproperlyConfigured, match='IDP_CONNECTION_ID'):
             client.get_connection()
 
     @override_site_config('admin', IDP_ORGANIZATION_ID='org_testid')
     def test_get_auth0_organization_id(self):
-        client = Auth0ApiClient()
+        client = FusionAuthApiClient()
         org_id = client._get_auth0_organization_id()
         self.assertEqual(org_id, 'org_testid')
 
     @override_site_config('admin', OTHER_CONFIG='some-value')
     def test_get_auth0_organization_id_missing_org_id(self):
-        client = Auth0ApiClient()
+        client = FusionAuthApiClient()
         with pytest.raises(ImproperlyConfigured, match='IDP_ORGANIZATION_ID'):
             client._get_auth0_organization_id()
 
     def test_create_user_no_name(self):
-        client = Auth0ApiClient()
+        client = FusionAuthApiClient()
         with self.assertRaises(KeyError):
             client.create_user({})
 
     def test_create_user_no_username(self):
-        client = Auth0ApiClient()
+        client = FusionAuthApiClient()
         with self.assertRaises(KeyError):
             client.create_user({"name": "Ahmed Jazzar"})
 
     def test_create_user_no_email(self):
-        client = Auth0ApiClient()
+        client = FusionAuthApiClient()
         with self.assertRaises(KeyError):
             client.create_user(
                 {
@@ -91,7 +91,7 @@ class TestAuth0ApiClient(TestCase):
             )
 
     def test_create_user_no_password(self):
-        client = Auth0ApiClient()
+        client = FusionAuthApiClient()
         with self.assertRaises(KeyError):
             client.create_user(
                 {
@@ -102,9 +102,9 @@ class TestAuth0ApiClient(TestCase):
             )
 
     @patch("tahoe_idp.api_client.requests.post")
-    @patch.object(Auth0ApiClient, "get_connection", Mock())
+    @patch.object(FusionAuthApiClient, "get_connection", Mock())
     def test_create_user(self, mock_post):
-        client = Auth0ApiClient()
+        client = FusionAuthApiClient()
         resp = client.create_user(
             {
                 "name": "Ahmed Jazzar",
@@ -144,7 +144,7 @@ class TestAuth0ApiClient(TestCase):
         mock_build_auth0_query,
         mock_get,
     ):
-        client = Auth0ApiClient()
+        client = FusionAuthApiClient()
 
         query = "test"
         url = client.users_url + "?q={}".format(query)
@@ -166,7 +166,7 @@ def test_get_access_token(
     client_secret = "secret"
     mock_get_client_info.return_value = (client_id, client_secret)
 
-    client = Auth0ApiClient()
+    client = FusionAuthApiClient()
     access_token = client._get_access_token()
 
     assert access_token == mock_post.return_value.json()["access_token"]

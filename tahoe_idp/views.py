@@ -6,7 +6,7 @@ from django.views.generic import TemplateView
 
 from site_config_client.openedx import api as config_api
 
-from tahoe_idp.api_client import Auth0ApiClient
+from tahoe_idp.api_client import FusionAuthApiClient
 
 
 class RegistrationView(TemplateView):
@@ -20,7 +20,7 @@ class RegistrationView(TemplateView):
 
 class RegistrationAPIView(View):
     def post(self, request, *args, **kwargs):
-        client = Auth0ApiClient()
+        client = FusionAuthApiClient()
 
         data = json.loads(request.body.decode("utf-8"))
         resp = client.create_user(data)
