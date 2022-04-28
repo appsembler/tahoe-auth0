@@ -3,6 +3,7 @@ Auth0 backend.
 """
 from urllib import request
 
+import requests
 from jose import jwt
 from social_core.backends.oauth import BaseOAuth2
 
@@ -44,13 +45,12 @@ def get_jwt_payload(client_id, response):
 
     issuer = "{}/".format(get_idp_base_url())
     audience = client_id
-    jwks = request.urlopen(  # nosec
-        "{}/.well-known/openid-configuration".format(get_idp_base_url())
-    )
+    jwks_response = requests.get("{}/.well-known/openid-configuration".format(get_idp_base_url()))
+    jwks = jwks_response.content
 
     return jwt.decode(
-        id_token,
-        bytearray(jwks.read()).decode("ascii"),
+        token=id_token,
+        key=jwks,
         algorithms=[
             "ES256",
             "ES384",
@@ -112,6 +112,13 @@ class TahoeIdpOAuth2(BaseOAuth2):
         Fetches the user details from response's JWT and build the social_core JSON object.
         """
         import random
+
+        id_token = response.get("id_token")
+        raise Exception(id_token)
+
+        # client_id = self.setting("KEY")  # CLIENT_ID
+        # jwt_payload = get_jwt_payload(client_id, response)
+
         email = 'test+{}@example.com'.format(random.randrange(1, 999999))
         return {
             'fullname': 'test',
