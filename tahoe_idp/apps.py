@@ -14,7 +14,25 @@ class TahoeIdpConfig(AppConfig):
             "lms.djangoapp": {
                 "namespace": "tahoe_idp",
                 "regex": "^tahoe-idp/api/v1/",
-            }
+            },
+            "cms.djangoapp": {
+                # TODO: Only include `path('login/', Login.as_view(), name='login'),` to avoid including signups
+                "namespace": "magiclink",
+                "app_name": "magiclink",
+                "regex": "^auth_link/",
+            },
+        },
+        "settings_config": {
+            "lms.djangoapp": {
+                "common": {
+                    "relative_path": "settings.common",
+                },
+            },
+            "cms.djangoapp": {
+                "common": {
+                    "relative_path": "settings.cms",
+                },
+            },
         },
     }
 

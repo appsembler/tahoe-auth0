@@ -14,6 +14,9 @@ social-auth-app-django==4.0.0 ; python_version >= "3.8"
 python-jose==3.3.0 ; python_version >= "3.8"
 requests==2.25.0 ; python_version >= "3.8"
 
+# Magiclink for Studio authentication until Maple
+django-magiclink==1.2.0
+
 # Test requirements
 # Those may break, when they do, pin them.
 django-coverage-plugin
