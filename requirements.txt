@@ -24,3 +24,6 @@ pytest-django
 pytest-cov
 unittest2
 ddt
+factory-boy
+pytest-mock
+pytest-freezegun

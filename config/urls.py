@@ -16,11 +16,19 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import include, path
+from .magiclink_urls import no_login, needs_login, CustomLoginVerify
 
 urlpatterns = [
     path("", include(("tahoe_idp.urls", "tahoe_idp"), namespace="tahoe_idp")),
     # Matches edX Platform
     path("auth/", include("social_django.urls", namespace="social")),
+]
+
+urlpatterns += [
+    path('no-login/', no_login, name='no_login'),
+    path('needs-login/', needs_login, name='needs_login'),
+    path('custom-login-verify/', CustomLoginVerify.as_view(), name='custom_login_verify'),  # NOQA: E501
+    # path('auth/', include('magiclink.urls', namespace='magiclink')),
 ]
 
 if settings.DEBUG:

@@ -3,8 +3,7 @@ import urllib.parse
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-
-
+from django.http import HttpRequest
 from site_config_client.openedx import api as config_client_api
 
 logger = logging.getLogger(__name__)
@@ -105,3 +104,12 @@ def build_auth0_query(**kwargs):
         for key, value in kwargs.items()
     ]
     return "&".join(args)
+
+
+def get_client_ip(request: HttpRequest) -> str:
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0].strip()
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip

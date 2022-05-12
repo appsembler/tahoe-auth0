@@ -23,7 +23,7 @@ SECRET_KEY = "django-insecure-dnz2qmkyk+_y2unpsfe9+##j5d)y_1p2e)0zk8^j@^$&fmt+7w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "social_django",
     "tahoe_idp",
+    "tahoe_idp.tests",
 ]
 
 MIDDLEWARE = [
@@ -138,7 +139,7 @@ AUTHENTICATION_BACKENDS = {
 }
 
 LOGIN_URL = "/login/tahoe-idp"
-LOGIN_REDIRECT_URL = "/dashboard"
+LOGIN_REDIRECT_URL = "needs_login"
 
 FEATURES = {"ENABLE_TAHOE_IDP": True}
 
