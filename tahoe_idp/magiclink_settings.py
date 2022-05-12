@@ -4,23 +4,14 @@ import warnings
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-LOGIN_SENT_REDIRECT = getattr(settings, 'MAGICLINK_LOGIN_SENT_REDIRECT', 'magiclink:login_sent')
-
-LOGIN_TEMPLATE_NAME = getattr(settings, 'MAGICLINK_LOGIN_TEMPLATE_NAME', 'magiclink/login.html')
-LOGIN_SENT_TEMPLATE_NAME = getattr(settings, 'MAGICLINK_LOGIN_SENT_TEMPLATE_NAME', 'magiclink/login_sent.html')
-LOGIN_FAILED_TEMPLATE_NAME = getattr(settings, 'MAGICLINK_LOGIN_FAILED_TEMPLATE_NAME', 'magiclink/login_failed.html')
+LOGIN_FAILED_TEMPLATE_NAME = getattr(
+    settings,
+    'MAGICLINK_LOGIN_FAILED_TEMPLATE_NAME',
+    'tahoe_idp/magiclink_login_failed.html'
+)
 # If LOGIN_FAILED_REDIRECT has a value the user will be redirected to this
 # URL instead of being shown the LOGIN_FAILED_TEMPLATE
 LOGIN_FAILED_REDIRECT = getattr(settings, 'MAGICLINK_LOGIN_FAILED_REDIRECT', '')
-
-# If this setting is set to False a user account will be created the first time
-# a user requests a login link.
-REQUIRE_SIGNUP = getattr(settings, 'MAGICLINK_REQUIRE_SIGNUP', True)
-if not isinstance(REQUIRE_SIGNUP, bool):
-    raise ImproperlyConfigured('"MAGICLINK_REQUIRE_SIGNUP" must be a boolean')
-SIGNUP_LOGIN_REDIRECT = getattr(settings, 'MAGICLINK_SIGNUP_LOGIN_REDIRECT', '')
-
-SIGNUP_TEMPLATE_NAME = getattr(settings, 'MAGICLINK_SIGNUP_TEMPLATE_NAME', 'magiclink/signup.html')
 
 try:
     TOKEN_LENGTH = int(getattr(settings, 'MAGICLINK_TOKEN_LENGTH', 50))
@@ -59,10 +50,6 @@ ALLOW_STAFF_LOGIN = getattr(settings, 'MAGICLINK_ALLOW_STAFF_LOGIN', True)
 if not isinstance(ALLOW_STAFF_LOGIN, bool):
     raise ImproperlyConfigured('"MAGICLINK_ALLOW_STAFF_LOGIN" must be a boolean')
 
-IGNORE_IS_ACTIVE_FLAG = getattr(settings, 'MAGICLINK_IGNORE_IS_ACTIVE_FLAG', False)
-if not isinstance(IGNORE_IS_ACTIVE_FLAG, bool):
-    raise ImproperlyConfigured('"MAGICLINK_IGNORE_IS_ACTIVE_FLAG" must be a boolean')
-
 VERIFY_INCLUDE_EMAIL = getattr(settings, 'MAGICLINK_VERIFY_INCLUDE_EMAIL', True)
 if not isinstance(VERIFY_INCLUDE_EMAIL, bool):
     raise ImproperlyConfigured('"MAGICLINK_VERIFY_INCLUDE_EMAIL" must be a boolean')
@@ -88,35 +75,6 @@ try:
 except ValueError:
     raise ImproperlyConfigured('"MAGICLINK_LOGIN_REQUEST_TIME_LIMIT" must be an integer')
 
+LOGIN_VERIFY_URL = getattr(settings, 'MAGICLINK_LOGIN_VERIFY_URL', 'tahoe_idp:login_verify')
 
-EMAIL_STYLES = {
-    'logo_url': '',
-    'background_color': '#ffffff',
-    'main_text_color': '#000000',
-    'button_background_color': '#0078be',
-    'button_text_color': '#ffffff',
-}
-EMAIL_STYLES = getattr(settings, 'MAGICLINK_EMAIL_STYLES', EMAIL_STYLES)
-if EMAIL_STYLES and not isinstance(EMAIL_STYLES, dict):
-    raise ImproperlyConfigured('"MAGICLINK_EMAIL_STYLES" must be a dict')
-
-EMAIL_SUBJECT = getattr(settings, 'MAGICLINK_EMAIL_SUBJECT', 'Your login magic link')
-EMAIL_TEMPLATE_NAME_TEXT = getattr(settings, 'MAGICLINK_EMAIL_TEMPLATE_NAME_TEXT', 'magiclink/login_email.txt')
-EMAIL_TEMPLATE_NAME_HTML = getattr(settings, 'MAGICLINK_EMAIL_TEMPLATE_NAME_HTML', 'magiclink/login_email.html')
-
-
-ANTISPAM_FORMS = getattr(settings, 'MAGICLINK_ANTISPAM_FORMS', False)
-if not isinstance(ANTISPAM_FORMS, bool):
-    raise ImproperlyConfigured('"MAGICLINK_ANTISPAM_FORMS" must be a boolean')
-ANTISPAM_FIELD_TIME = getattr(settings, 'MAGICLINK_ANTISPAM_FIELD_TIME', 1)
-if ANTISPAM_FIELD_TIME is not None:
-    try:
-        ANTISPAM_FIELD_TIME = float(ANTISPAM_FIELD_TIME)
-    except ValueError:
-        raise ImproperlyConfigured('"MAGICLINK_ANTISPAM_FIELD_TIME" must be a float')
-
-LOGIN_VERIFY_URL = getattr(settings, 'MAGICLINK_LOGIN_VERIFY_URL', 'magiclink:login_verify')
-
-IGNORE_UNSUBSCRIBE_IF_USER = getattr(settings, 'MAGICLINK_IGNORE_UNSUBSCRIBE_IF_USER', False)
-if not isinstance(IGNORE_UNSUBSCRIBE_IF_USER, bool):
-    raise ImproperlyConfigured('"MAGICLINK_IGNORE_UNSUBSCRIBE_IF_USER" must be a boolean')
+STUDIO_DOMAIN = getattr(settings, 'MAGICLINK_STUDIO_DOMAIN', 'studio.example.com')

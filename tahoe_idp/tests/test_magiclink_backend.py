@@ -1,10 +1,10 @@
 import pytest
 from django.http import HttpRequest
 
-from magiclink.backends import MagicLinkBackend
-from magiclink.models import MagicLink
+from tahoe_idp.magiclink_backends import MagicLinkBackend
+from tahoe_idp.models import MagicLink
 
-from .fixtures import magic_link, user  # NOQA: F401
+from tahoe_idp.tests.magiclink_fixtures import magic_link, user  # NOQA: F401
 
 
 @pytest.mark.django_db
@@ -21,7 +21,7 @@ def test_auth_backend_get_user_do_not_exist(user):  # NOQA: F811
 def test_auth_backend(user, magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
-    request.COOKIES[f'magiclink{ml.pk}'] = ml.cookie_value
+    request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = ml.cookie_value
     user = MagicLinkBackend().authenticate(
         request=request, token=ml.token, email=user.email
     )
@@ -44,7 +44,7 @@ def test_auth_backend_no_token(user, magic_link):  # NOQA: F811
 def test_auth_backend_disabled_token(user, magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
-    request.COOKIES[f'magiclink{ml.pk}'] = ml.cookie_value
+    request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = ml.cookie_value
     ml.disabled = True
     ml.save()
     user = MagicLinkBackend().authenticate(
@@ -57,7 +57,7 @@ def test_auth_backend_disabled_token(user, magic_link):  # NOQA: F811
 def test_auth_backend_no_email(user, magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
-    request.COOKIES[f'magiclink{ml.pk}'] = ml.cookie_value
+    request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = ml.cookie_value
     user = MagicLinkBackend().authenticate(request=request, token=ml.token)
     assert user is None
 
@@ -66,7 +66,7 @@ def test_auth_backend_no_email(user, magic_link):  # NOQA: F811
 def test_auth_backend_invalid(user, magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
-    request.COOKIES[f'magiclink{ml.pk}'] = ml.cookie_value
+    request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = ml.cookie_value
     user = MagicLinkBackend().authenticate(
         request=request, token=ml.token, email='fake@email.com'
     )

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "social_django",
     "tahoe_idp",
+    "tahoe_idp.tests",
 ]
 
 MIDDLEWARE = [
@@ -133,11 +134,12 @@ SOCIAL_TAHOE_IDP_SCOPE = ["openid", "offline_access"]
 
 AUTHENTICATION_BACKENDS = {
     "tahoe_idp.backend.TahoeIdpOAuth2",
+    "tahoe_idp.magiclink_backends.MagicLinkBackend",
     "django.contrib.auth.backends.ModelBackend",
 }
 
 LOGIN_URL = "/login/tahoe-idp"
-LOGIN_REDIRECT_URL = "/dashboard"
+LOGIN_REDIRECT_URL = "needs_login"
 
 FEATURES = {"ENABLE_TAHOE_IDP": True}
 

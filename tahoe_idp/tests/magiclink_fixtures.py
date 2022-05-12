@@ -1,15 +1,15 @@
 import pytest
 from django.contrib.auth import get_user_model
 
-from magiclink.helpers import create_magiclink, get_or_create_user
+from tahoe_idp.magiclink_helpers import create_magiclink
 
 User = get_user_model()
 
 
 @pytest.fixture()
 def user():
-    user = get_or_create_user(email='test@example.com')
-    return user
+    email = 'test@example.com'
+    return User.objects.create(email=email, username=email)
 
 
 @pytest.fixture
