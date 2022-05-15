@@ -9,12 +9,10 @@ from unittest.mock import patch
 from httpretty import HTTPretty
 from jose import jwt
 
-# from tahoe_idp.api_client import FusionAuthApiClient
 from tahoe_idp.backend import TahoeIdpOAuth2
-from tahoe_idp.tests.oauth import OAuth2Test
 
-
-ORGANIZATION_ID = "org_sOm31D"
+from .oauth import OAuth2Test
+from .conftest import mock_tahoe_idp_api_settings, MOCK_TENANT_ID
 
 
 JWK_KEY = {
@@ -39,23 +37,20 @@ JWK_KEY = {
 
 JWK_PUBLIC_KEY = {key: value for key, value in JWK_KEY.items() if key != "d"}
 
-
-def patch_api_client(test_func):
-    return test_func
-    # patch_get_user = patch.object(
-    #     FusionAuthApiClient, "get_user", return_value={"username": expected_username}
-    # )
-    # patch_get_access_token = patch.object(FusionAuthApiClient, "_get_access_token")
-    # patch_get_org_id = patch.object(
-    #     FusionAuthApiClient, "_get_auth0_organization_id", return_value=organization_id
-    # )
-    # return patch_get_user(patch_get_access_token(patch_get_org_id(test_func)))
+# patch_get_user = patch.object(
+#     FusionAuthApiClient, "get_user", return_value={"username": expected_username}
+# )
+# patch_get_access_token = patch.object(FusionAuthApiClient, "_get_access_token")
+# patch_get_org_id = patch.object(
+#     FusionAuthApiClient, "_get_auth0_tenant_id", return_value=tenant_id
+# )
+# return patch_get_user(patch_get_access_token(patch_get_org_id(test_func)))
 
 
 @pytest.mark.usefixtures('mock_tahoe_idp_settings')
 class Auth0Test(OAuth2Test):
     backend_path = "tahoe_idp.backend.TahoeIdpOAuth2"
-    domain = "domain.world"
+    base_url = "https://domain.world"
     access_token_body = json.dumps(
         {
             "access_token": "foobar",
@@ -68,7 +63,7 @@ class Auth0Test(OAuth2Test):
                     "name": "John Doe",
                     "picture": "http://example.com/image.png",
                     "sub": "123456",
-                    "iss": "{}/".format(domain),
+                    "iss": "{}/".format(base_url),
                 },
                 JWK_KEY,
                 algorithm="RS256",
@@ -76,12 +71,12 @@ class Auth0Test(OAuth2Test):
         }
     )
     expected_username = "foobar"
-    organization_id = ORGANIZATION_ID
-    jwks_url = "{}/.well-known/jwks.json".format(domain)
+    tenant_id = MOCK_TENANT_ID
+    jwks_url = "{}/.well-known/jwks.json".format(base_url)
 
     def extra_settings(self):
         settings = super().extra_settings()
-        settings["SOCIAL_AUTH_" + self.name + "_DOMAIN"] = self.domain
+        settings["SOCIAL_AUTH_" + self.name + "_DOMAIN"] = self.base_url
         return settings
 
     def auth_handlers(self, start_url):
@@ -93,48 +88,42 @@ class Auth0Test(OAuth2Test):
         )
         return super().auth_handlers(start_url)
 
-    @patch_api_client
+    @mock_tahoe_idp_api_settings
     def test_login(self, *args):
         self.do_login()
 
-    @patch_api_client
+    @mock_tahoe_idp_api_settings
     def test_partial_pipeline(self, *args):
         self.do_partial_pipeline()
 
-    @patch_api_client
-    def test_client(self, *args):
-        self.assertIsInstance(self.backend.client, FusionAuthApiClient)
-
-    @patch_api_client
-    def test_auth_params(self, mock_get_auth0_organization_id, *args):
+    @mock_tahoe_idp_api_settings
+    def test_auth_params(self, *args):
         auth_params = self.backend.auth_params()
-        self.assertIn("organization", auth_params)
-        self.assertEqual(
-            auth_params["organization"], mock_get_auth0_organization_id.return_value
-        )
+        assert "tenantId" in auth_params
+        assert auth_params["tenantId"] == MOCK_TENANT_ID
 
-    @patch_api_client
+    @mock_tahoe_idp_api_settings
     def test_authorization_url(self, *args):
         self.assertEqual(
-            self.backend.authorization_url(), "https://{}/authorize".format(self.domain)
+            self.backend.authorization_url(), "{}/oauth2/authorize".format(self.base_url)
         )
 
-    @patch_api_client
+    @mock_tahoe_idp_api_settings
     def test_access_token_url(self, *args):
         self.assertEqual(
             self.backend.access_token_url(),
-            "{}/oauth/token".format(self.domain),
+            "{}/oauth2/token".format(self.base_url),
         )
 
-    @patch_api_client
+    @mock_tahoe_idp_api_settings
     def test_revoke_token_url(self, *args):
         self.assertEqual(
             self.backend.revoke_token_url("token", "uid"),
-            "{}/logout".format(self.domain),
+            "{}/oauth2/logout".format(self.base_url),
         )
 
-    @patch_api_client
-    @patch.object(TahoeIdpOAuth2, "_get_payload")
+    @mock_tahoe_idp_api_settings
+    @patch('tahoe_idp.helpers.get_jwt_payload')
     def test_get_user_id(self, mock_get_payload, *args):
         id_token = self.get_id_token()
         mock_get_payload.return_value = id_token
@@ -143,8 +132,8 @@ class Auth0Test(OAuth2Test):
 
         self.assertEqual(user_id, id_token["sub"])
 
-    @patch.object(TahoeIdpOAuth2, "_get_payload")
-    @patch_api_client
+    @patch.object(TahoeIdpOAuth2, "get_jwt_payload")
+    @mock_tahoe_idp_api_settings
     def test_get_user_details(self, mock_get_user, *args):
         mock_get_user.return_value = {
             "username": self.expected_username,
@@ -185,7 +174,7 @@ class Auth0Test(OAuth2Test):
             "sub": "auth0|a0d9hszw742wd7hkgwha",
         }
 
-        user_details = self.backend._build_user_details(
+        user_details = self.backend.get_user_details(
             jwt_payload=jwt_payload,
             auth0_user=auth0_user,
         )

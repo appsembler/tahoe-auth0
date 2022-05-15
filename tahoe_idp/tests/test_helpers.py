@@ -9,7 +9,6 @@ from site_config_client.openedx.test_helpers import override_site_config
 from tahoe_idp.helpers import (
     fail_if_tahoe_idp_not_enabled,
     get_idp_base_url,
-    get_client_info,
     is_tahoe_idp_enabled,
 )
 
@@ -26,32 +25,6 @@ class TestBaseURL(TestCase):
     def test_with_base_url(self):
         base_url = get_idp_base_url()
         self.assertEqual(base_url, "http://fa:9100")
-
-
-@ddt
-class TestClientInfo(TestCase):
-    @data(
-        {"API_CLIENT_ID": "client-id"},
-        {"API_CLIENT_SECRET": "client-secret"},
-    )
-    def test_missing_info(self, settings):
-        message = (
-            "Both `API_CLIENT_ID` and `API_CLIENT_SECRET` must be "
-            "present in your `TAHOE_IDP_CONFIGS`"
-        )
-
-        with override_settings(TAHOE_IDP_CONFIGS=settings), override_site_config("admin", ENABLE_TAHOE_IDP=True):
-            with self.assertRaisesMessage(ImproperlyConfigured, message):
-                get_client_info()
-
-    @override_settings(
-        TAHOE_IDP_CONFIGS={"API_CLIENT_ID": "cid", "API_CLIENT_SECRET": "secret"}
-    )
-    @override_site_config("admin", ENABLE_TAHOE_IDP=True)
-    def test_correct_configuration(self):
-        client_id, client_secret = get_client_info()
-        self.assertEqual(client_id, "cid")
-        self.assertEqual(client_secret, "secret")
 
 
 @ddt

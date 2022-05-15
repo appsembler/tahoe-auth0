@@ -9,14 +9,7 @@ class TahoeIdpConfig(AppConfig):
     name = "tahoe_idp"
     default_auto_field = "django.db.models.BigAutoField"
 
-    plugin_app = {
-        "url_config": {
-            "lms.djangoapp": {
-                "namespace": "tahoe_idp",
-                "regex": "^tahoe-idp/api/v1/",
-            }
-        },
-    }
+    plugin_app = {}
 
     def ready(self):
         logger.debug("Tahoe IdP plugin is ready.")

@@ -3,7 +3,6 @@ Helpers
 """
 
 import logging
-import urllib.parse
 
 import requests
 from fusionauth.fusionauth_client import FusionAuthClient
@@ -132,25 +131,6 @@ def get_jwt_algorithms():
         "ES384",
         "ES512",
     ])
-
-
-def get_client_info():
-    """
-    A helper method responsible for fetching the access token and the client secret
-    from Django settings.FEATURES.
-    If either value does not exist, we will raise an ImproperlyConfigured error.
-    """
-    fail_if_tahoe_idp_not_enabled()
-    client_id = settings.TAHOE_IDP_CONFIGS.get("API_CLIENT_ID")
-    client_secret = settings.TAHOE_IDP_CONFIGS.get("API_CLIENT_SECRET")
-
-    if not client_id or not client_secret:
-        raise ImproperlyConfigured(
-            "Both `API_CLIENT_ID` and `API_CLIENT_SECRET` must be present "
-            "in your `TAHOE_IDP_CONFIGS`"
-        )
-
-    return client_id, client_secret
 
 
 def get_api_client():

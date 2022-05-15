@@ -15,14 +15,14 @@ External Python API helpers goes here.
 from social_django.models import UserSocialAuth
 
 from .constants import BACKEND_NAME
-from .helpers import get_api_client
+from . import helpers
 
 
 def request_password_reset(email):
     """
     Start password reset email for Username|Password Database Connection users.
     """
-    api_client = get_api_client()
+    api_client = helpers.get_api_client()
     return api_client.forgot_password({'loginId': email})
 
 
@@ -50,7 +50,7 @@ def update_user(user, properties):
 
     See: https://fusionauth.io/docs/v1/tech/apis/users#update-a-user
     """
-    api_client = get_api_client()
+    api_client = helpers.get_api_client()
     idp_user_id = get_tahoe_idp_id_by_user(user)
     return api_client.patch_user(user_id=idp_user_id, request=properties)
 
