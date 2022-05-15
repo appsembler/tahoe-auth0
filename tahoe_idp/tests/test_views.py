@@ -7,7 +7,7 @@ from requests import Response
 
 from site_config_client.openedx.test_helpers import override_site_config
 
-from tahoe_idp.api_client import FusionAuthApiClient
+# from tahoe_idp.api_client import FusionAuthApiClient
 from tahoe_idp.views import RegistrationView
 
 
@@ -34,8 +34,8 @@ class TestRegistrationAPIView(TestCase):
         self.assertEqual(response.status_code, 405)
 
     @patch("tahoe_idp.api_client.helpers.get_idp_base_url")
-    @patch.object(FusionAuthApiClient, "_get_access_token")
-    @patch.object(FusionAuthApiClient, "create_user")
+    # @patch.object(FusionAuthApiClient, "_get_access_token")
+    # @patch.object(FusionAuthApiClient, "create_user")
     def test_post(self, mock_create_user, mock_get_access_token, mock_get_idp_base_url):
         mock_create_user.return_value = create_mocked_response()
 

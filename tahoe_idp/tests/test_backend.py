@@ -9,9 +9,13 @@ from unittest.mock import patch
 from httpretty import HTTPretty
 from jose import jwt
 
-from tahoe_idp.api_client import FusionAuthApiClient
+# from tahoe_idp.api_client import FusionAuthApiClient
 from tahoe_idp.backend import TahoeIdpOAuth2
 from tahoe_idp.tests.oauth import OAuth2Test
+
+
+ORGANIZATION_ID = "org_sOm31D"
+
 
 JWK_KEY = {
     "kty": "RSA",
@@ -34,6 +38,18 @@ JWK_KEY = {
 }
 
 JWK_PUBLIC_KEY = {key: value for key, value in JWK_KEY.items() if key != "d"}
+
+
+def patch_api_client(test_func):
+    return test_func
+    # patch_get_user = patch.object(
+    #     FusionAuthApiClient, "get_user", return_value={"username": expected_username}
+    # )
+    # patch_get_access_token = patch.object(FusionAuthApiClient, "_get_access_token")
+    # patch_get_org_id = patch.object(
+    #     FusionAuthApiClient, "_get_auth0_organization_id", return_value=organization_id
+    # )
+    # return patch_get_user(patch_get_access_token(patch_get_org_id(test_func)))
 
 
 @pytest.mark.usefixtures('mock_tahoe_idp_settings')
@@ -60,7 +76,7 @@ class Auth0Test(OAuth2Test):
         }
     )
     expected_username = "foobar"
-    organization_id = "org_sOm31D"
+    organization_id = ORGANIZATION_ID
     jwks_url = "{}/.well-known/jwks.json".format(domain)
 
     def extra_settings(self):
@@ -77,43 +93,19 @@ class Auth0Test(OAuth2Test):
         )
         return super().auth_handlers(start_url)
 
-    @patch.object(
-        FusionAuthApiClient, "get_user", return_value={"username": expected_username}
-    )
-    @patch.object(FusionAuthApiClient, "_get_access_token")
-    @patch.object(
-        FusionAuthApiClient, "_get_auth0_organization_id", return_value=organization_id
-    )
+    @patch_api_client
     def test_login(self, *args):
         self.do_login()
 
-    @patch.object(
-        FusionAuthApiClient, "get_user", return_value={"username": expected_username}
-    )
-    @patch.object(FusionAuthApiClient, "_get_access_token")
-    @patch.object(
-        FusionAuthApiClient, "_get_auth0_organization_id", return_value=organization_id
-    )
+    @patch_api_client
     def test_partial_pipeline(self, *args):
         self.do_partial_pipeline()
 
-    @patch.object(
-        FusionAuthApiClient, "get_user", return_value={"username": expected_username}
-    )
-    @patch.object(FusionAuthApiClient, "_get_access_token")
-    @patch.object(
-        FusionAuthApiClient, "_get_auth0_organization_id", return_value=organization_id
-    )
+    @patch_api_client
     def test_client(self, *args):
         self.assertIsInstance(self.backend.client, FusionAuthApiClient)
 
-    @patch.object(
-        FusionAuthApiClient, "get_user", return_value={"username": expected_username}
-    )
-    @patch.object(FusionAuthApiClient, "_get_access_token")
-    @patch.object(
-        FusionAuthApiClient, "_get_auth0_organization_id", return_value=organization_id
-    )
+    @patch_api_client
     def test_auth_params(self, mock_get_auth0_organization_id, *args):
         auth_params = self.backend.auth_params()
         self.assertIn("organization", auth_params)
@@ -121,51 +113,27 @@ class Auth0Test(OAuth2Test):
             auth_params["organization"], mock_get_auth0_organization_id.return_value
         )
 
-    @patch.object(
-        FusionAuthApiClient, "get_user", return_value={"username": expected_username}
-    )
-    @patch.object(FusionAuthApiClient, "_get_access_token")
-    @patch.object(
-        FusionAuthApiClient, "_get_auth0_organization_id", return_value=organization_id
-    )
+    @patch_api_client
     def test_authorization_url(self, *args):
         self.assertEqual(
             self.backend.authorization_url(), "https://{}/authorize".format(self.domain)
         )
 
-    @patch.object(
-        FusionAuthApiClient, "get_user", return_value={"username": expected_username}
-    )
-    @patch.object(FusionAuthApiClient, "_get_access_token")
-    @patch.object(
-        FusionAuthApiClient, "_get_auth0_organization_id", return_value=organization_id
-    )
+    @patch_api_client
     def test_access_token_url(self, *args):
         self.assertEqual(
             self.backend.access_token_url(),
             "{}/oauth/token".format(self.domain),
         )
 
-    @patch.object(
-        FusionAuthApiClient, "get_user", return_value={"username": expected_username}
-    )
-    @patch.object(FusionAuthApiClient, "_get_access_token")
-    @patch.object(
-        FusionAuthApiClient, "_get_auth0_organization_id", return_value=organization_id
-    )
+    @patch_api_client
     def test_revoke_token_url(self, *args):
         self.assertEqual(
             self.backend.revoke_token_url("token", "uid"),
             "{}/logout".format(self.domain),
         )
 
-    @patch.object(
-        FusionAuthApiClient, "get_user", return_value={"username": expected_username}
-    )
-    @patch.object(FusionAuthApiClient, "_get_access_token")
-    @patch.object(
-        FusionAuthApiClient, "_get_auth0_organization_id", return_value=organization_id
-    )
+    @patch_api_client
     @patch.object(TahoeIdpOAuth2, "_get_payload")
     def test_get_user_id(self, mock_get_payload, *args):
         id_token = self.get_id_token()
@@ -175,12 +143,8 @@ class Auth0Test(OAuth2Test):
 
         self.assertEqual(user_id, id_token["sub"])
 
-    @patch.object(FusionAuthApiClient, "_get_access_token")
-    @patch.object(
-        FusionAuthApiClient, "_get_auth0_organization_id", return_value=organization_id
-    )
     @patch.object(TahoeIdpOAuth2, "_get_payload")
-    @patch.object(FusionAuthApiClient, "get_user")
+    @patch_api_client
     def test_get_user_details(self, mock_get_user, *args):
         mock_get_user.return_value = {
             "username": self.expected_username,

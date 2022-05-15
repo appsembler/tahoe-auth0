@@ -14,18 +14,18 @@ from tahoe_idp.helpers import (
 )
 
 
-class TestDomain(TestCase):
+class TestBaseURL(TestCase):
     @override_settings(TAHOE_IDP_CONFIGS={})
     @override_site_config("admin", ENABLE_TAHOE_IDP=True)
-    def test_no_domain(self):
+    def test_no_base_url(self):
         with self.assertRaises(ImproperlyConfigured):
             get_idp_base_url()
 
-    @override_settings(TAHOE_IDP_CONFIGS={"DOMAIN": "example.auth0.com"})
+    @override_settings(TAHOE_IDP_CONFIGS={"BASE_URL": "http://fa:9100"})
     @override_site_config("admin", ENABLE_TAHOE_IDP=True)
-    def test_with_domain(self):
-        actual_domain = get_idp_base_url()
-        self.assertEqual(actual_domain, "example.auth0.com")
+    def test_with_base_url(self):
+        base_url = get_idp_base_url()
+        self.assertEqual(base_url, "http://fa:9100")
 
 
 @ddt

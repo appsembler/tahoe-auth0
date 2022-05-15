@@ -8,7 +8,7 @@ from unittest.mock import patch, Mock
 from site_config_client.openedx.test_helpers import override_site_config
 
 import tahoe_idp.helpers
-from tahoe_idp.api_client import FusionAuthApiClient
+# from tahoe_idp.api_client import FusionAuthApiClient
 
 
 @pytest.fixture(scope='function')
@@ -37,5 +37,6 @@ def mock_tahoe_idp_api_settings(test_func):
         config_type='admin',
         IDP_TENANT_ID='org_testxyz',
     )
-    access_token_patch = patch.object(FusionAuthApiClient, '_get_access_token', Mock(return_value='xyz-token'))
-    return access_token_patch(admin_patch(test_func))
+    # access_token_patch = patch.object(FusionAuthApiClient, '_get_access_token', Mock(return_value='xyz-token'))
+    # return access_token_patch(admin_patch(test_func))
+    return admin_patch(test_func)
