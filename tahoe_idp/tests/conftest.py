@@ -35,8 +35,7 @@ def mock_tahoe_idp_api_settings(test_func):
     """
     admin_patch = override_site_config(
         config_type='admin',
-        IDP_ORGANIZATION_ID='org_testxyz',
-        IDP_CONNECTION_ID='con-testxyz',
+        IDP_TENANT_ID='org_testxyz',
     )
     access_token_patch = patch.object(FusionAuthApiClient, '_get_access_token', Mock(return_value='xyz-token'))
     return access_token_patch(admin_patch(test_func))

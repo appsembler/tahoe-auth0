@@ -14,16 +14,16 @@ External Python API helpers goes here.
 
 from social_django.models import UserSocialAuth
 
-from .api_client import FusionAuthApiClient
 from .constants import BACKEND_NAME
+from .helpers import get_api_client
 
 
 def request_password_reset(email):
     """
     Start password reset email for Username|Password Database Connection users.
     """
-    auth0_api_client = FusionAuthApiClient()
-    return auth0_api_client.change_password_via_reset_for_db_connection(email)
+    api_client = get_api_client()
+    return api_client.forgot_password({'loginId': email})
 
 
 def get_tahoe_idp_id_by_user(user):
@@ -46,22 +46,26 @@ def get_tahoe_idp_id_by_user(user):
 
 def update_user(user, properties):
     """
-    Update Auth0 user properties via PATCH /api/v2/users/.
+    Update Auth0 user properties via PATCH /api/user/{userId}.
 
-    See: https://auth0.com/docs/api/management/v2#!/Users/patch_users_by_id
+    See: https://fusionauth.io/docs/v1/tech/apis/users#update-a-user
     """
-    auth0_api_client = FusionAuthApiClient()
-    auth0_user_id = get_tahoe_idp_id_by_user(user)
-    return auth0_api_client.update_user(auth0_user_id, properties)
+    api_client = get_api_client()
+    idp_user_id = get_tahoe_idp_id_by_user(user)
+    return api_client.patch_user(user_id=idp_user_id, request=properties)
 
 
-def update_user_email(user, email, set_email_as_verified=False):
+def update_user_email(user, email, skip_email_verification=False):
     """
-    Update user email via PATCH /api/v2/users/.
+    Update user email via PATCH /api/user/{userId}.
     """
-    properties = {'email': email}
+    properties = {
+        'user': {
+            'email': email,
+        },
+    }
 
-    if set_email_as_verified:
+    if skip_email_verification:
         properties['email_verified'] = True
 
     update_user(user, properties=properties)

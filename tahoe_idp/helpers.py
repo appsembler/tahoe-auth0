@@ -1,11 +1,18 @@
+"""
+Helpers
+"""
+
 import logging
 import urllib.parse
+
+import requests
+from fusionauth.fusionauth_client import FusionAuthClient
+from jose import jwt
+from site_config_client.openedx import api as config_client_api
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-
-from site_config_client.openedx import api as config_client_api
 
 logger = logging.getLogger(__name__)
 
@@ -70,9 +77,61 @@ def get_idp_base_url():
     domain = settings.TAHOE_IDP_CONFIGS.get("BASE_URL")
 
     if not domain:
-        raise ImproperlyConfigured("Tahoe IdP `DOMAIN` cannot be empty")
+        raise ImproperlyConfigured("Tahoe IdP `BASE_URL` cannot be empty")
 
     return domain
+
+
+def get_tenant_id():
+    """
+    Get API_KEY for the FusionAuth API client.
+    """
+    fail_if_tahoe_idp_not_enabled()
+    idp_tenant_id = config_client_api.get_admin_value("IDP_TENANT_ID")
+
+    if not idp_tenant_id:
+        raise ImproperlyConfigured("Tahoe IdP `IDP_TENANT_ID` cannot be empty in `admin` Site Configuration.")
+
+    return idp_tenant_id
+
+
+def get_api_key():
+    """
+    Get API_KEY for the FusionAuth API client.
+    """
+    fail_if_tahoe_idp_not_enabled()
+    api_key = settings.TAHOE_IDP_CONFIGS.get("API_KEY")
+
+    if not api_key:
+        raise ImproperlyConfigured("Tahoe IdP `API_KEY` cannot be empty")
+
+    return api_key
+
+
+def get_id_jwt_decode_options():
+    """
+    Get IdP jwt decode configs from Django's settings variable.
+    """
+    fail_if_tahoe_idp_not_enabled()
+    return settings.TAHOE_IDP_CONFIGS.get("JWT_OPTIONS", {})
+
+
+def get_jwt_algorithms():
+    """
+    Get
+
+    See: https://fusionauth.io/learn/expert-advice/tokens/anatomy-of-jwt
+    """
+    fail_if_tahoe_idp_not_enabled()
+    return settings.TAHOE_IDP_CONFIGS.get("JWT_ALGORITHMS", [
+        "HS256",
+        "RS256",
+        "RS384",
+        "RS512",
+        "ES256",
+        "ES384",
+        "ES512",
+    ])
 
 
 def get_client_info():
@@ -94,14 +153,48 @@ def get_client_info():
     return client_id, client_secret
 
 
-def build_auth0_query(**kwargs):
+def get_api_client():
     """
-    Responsible for building a querystring used in Tahoe IdP GET APIs.
+    Get a configured Rest API client for the Identity Provider.
+    """
+    client = FusionAuthClient(
+        api_key=get_api_key(),
+        base_url=get_idp_base_url(),
+    )
+    client.set_tenant_id(get_tenant_id())
+    return client
 
-    This is Auth0-specific.
+
+def get_jwt_payload(client_id, id_token):
     """
-    args = [
-        urllib.parse.quote_plus('{}:"{}"'.format(key, value))
-        for key, value in kwargs.items()
-    ]
-    return "&".join(args)
+    Verifies and returns a JWT token payload from the response. A normal returned
+    payload looks like the following:
+        {
+            'iss': 'https://<tenant>.us.auth0.com/',
+            'name': 'Ahmed Jazzar',
+            'email_verified': False,
+            'picture': 'https://s.gravatar.com/avatar/abcd.png',
+            'exp': 1633164125,
+            'sub': 'auth0|61578ee61e38d9006859b612',
+            'email': 'ahmed@appsembler.com',
+            'updated_at': '2021-10-01T22:42:54.841Z',
+            'iat': 1633128125,
+            'nickname': 'ahmed+w0crpcxx7rirspdang',
+            'org_id': 'org_2ud2MmLH8vB35m01',
+            'aud': '9TbUCXJ9F3u3Q5jyRpOWuKaybiCk3rEa'
+        }
+    """
+    issuer = "{}/".format(get_idp_base_url())
+    audience = client_id
+    jwks_response = requests.get("{}/.well-known/jwks.json".format(get_idp_base_url()))
+    jwks_response.raise_for_status()
+    jwks = jwks_response.json()
+
+    return jwt.decode(
+        token=id_token,
+        key=jwks,
+        algorithms=get_jwt_algorithms(),
+        audience=audience,
+        issuer=issuer,
+        options=get_id_jwt_decode_options(),
+    )

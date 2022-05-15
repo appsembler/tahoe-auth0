@@ -7,7 +7,6 @@ from django.test import TestCase, override_settings
 from site_config_client.openedx.test_helpers import override_site_config
 
 from tahoe_idp.helpers import (
-    build_auth0_query,
     fail_if_tahoe_idp_not_enabled,
     get_idp_base_url,
     get_client_info,
@@ -53,42 +52,6 @@ class TestClientInfo(TestCase):
         client_id, client_secret = get_client_info()
         self.assertEqual(client_id, "cid")
         self.assertEqual(client_secret, "secret")
-
-
-class TestBuildAuth0Query(TestCase):
-    def test_no_kwargs(self):
-        query = build_auth0_query()
-        self.assertEqual(query, "")
-
-    def test_empty_kwargs(self):
-        query = build_auth0_query(**{})
-        self.assertEqual(query, "")
-
-    def test_one_arg(self):
-        kwargs = {
-            "a": 1,
-        }
-        query = build_auth0_query(**kwargs)
-
-        # A url-encoded value of a:"1"
-        self.assertEqual(query, "a%3A%221%22")
-
-    def test_multiple_args(self):
-        kwargs = {
-            "a": 1,
-            "ab.cd": "some value",
-        }
-        query = build_auth0_query(**kwargs)
-
-        # A url-encoded value of a:"1"&ab.cd:"some value"
-        # Order doesn't matter here.
-        self.assertIn(
-            query,
-            [
-                "a%3A%221%22&ab.cd%3A%22some+value%22",
-                "ab.cd%3A%22some+value%22&a%3A%221%22",
-            ],
-        )
 
 
 @ddt

@@ -1,70 +1,18 @@
 """
-Auth0 backend.
+Tahoe Identity Provider backend.
 """
-from urllib import request
 
-import requests
-from jose import jwt
 from social_core.backends.oauth import BaseOAuth2
 
-from .api_client import FusionAuthApiClient
+
 from .constants import BACKEND_NAME
-from .helpers import get_idp_base_url
+from . import helpers
 
 from .permissions import (
     get_role_with_default,
     is_organization_admin,
     is_organization_staff,
 )
-
-
-def get_api_client():
-    return FusionAuthApiClient()
-
-
-def get_jwt_payload(client_id, response):
-    """
-    Verifies and returns a JWT token payload from the response. A normal returned
-    payload looks like the following:
-        {
-            'iss': 'https://<tenant>.us.auth0.com/',
-            'name': 'Ahmed Jazzar',
-            'email_verified': False,
-            'picture': 'https://s.gravatar.com/avatar/abcd.png',
-            'exp': 1633164125,
-            'sub': 'auth0|61578ee61e38d9006859b612',
-            'email': 'ahmed@appsembler.com',
-            'updated_at': '2021-10-01T22:42:54.841Z',
-            'iat': 1633128125,
-            'nickname': 'ahmed+w0crpcxx7rirspdang',
-            'org_id': 'org_2ud2MmLH8vB35m01',
-            'aud': '9TbUCXJ9F3u3Q5jyRpOWuKaybiCk3rEa'
-        }
-    """
-    id_token = response.get("id_token")
-
-    issuer = "{}/".format(get_idp_base_url())
-    audience = client_id
-    jwks_response = requests.get("{}/.well-known/openid-configuration".format(get_idp_base_url()))
-    jwks = jwks_response.content
-
-    return jwt.decode(
-        token=id_token,
-        key=jwks,
-        algorithms=[
-            "ES256",
-            "ES384",
-            "ES512",
-            "HS256",
-            "HS384",
-            "HS512",
-            "RS256",
-            "RS384",
-            "RS512",
-        ],
-        audience=audience,
-        issuer=issuer,
-    )
 
 
 class TahoeIdpOAuth2(BaseOAuth2):
@@ -84,65 +32,53 @@ class TahoeIdpOAuth2(BaseOAuth2):
         Auth0 Management Console.
         """
         params = super().auth_params(state=state)
-        params["organization"] = get_api_client().organization_id
+        params["tenantId"] = helpers.get_tenant_id()
         return params
 
     def authorization_url(self):
-        return "{}/oauth2/authorize".format(get_idp_base_url())
+        return "{}/oauth2/authorize".format(helpers.get_idp_base_url())
 
     def access_token_url(self):
-        return "{}/oauth2/token".format(get_idp_base_url())
+        return "{}/oauth2/token".format(helpers.get_idp_base_url())
 
     def revoke_token_url(self, token, uid):
-        return "{}/oauth2/logout".format(get_idp_base_url())
+        return "{}/oauth2/logout".format(helpers.get_idp_base_url())
 
-    # def get_user_id(self, details, response):
-    #     """
-    #     Return current permanent user id.
-    #
-    #     A payload's sub value contains Auth0's unique user ID; similar
-    #     to this: auth0|61578ee61e38d9006859b612
-    #     """
-    #     client_id = self.setting("KEY")  # CLIENT_ID
-    #     payload = get_jwt_payload(client_id, response)
-    #     return payload["sub"]
+    def get_user_id(self, details, response):
+        """
+        Return current permanent user id.
+        A payload's userId value contains FusionAuth's unique user uuid;
+        similar to this: 2a106a94-c8b0-4f0b-bb69-fea0022c18d8
+        """
+        return response["userId"]
 
     def get_user_details(self, response):
         """
         Fetches the user details from response's JWT and build the social_core JSON object.
         """
-        import random
-
         id_token = response.get("id_token")
-        raise Exception(id_token)
 
-        # client_id = self.setting("KEY")  # CLIENT_ID
-        # jwt_payload = get_jwt_payload(client_id, response)
+        client_id = self.setting("KEY")  # CLIENT_ID
+        jwt_payload = helpers.get_jwt_payload(client_id, id_token)
+        idp_user_uuid = jwt_payload["sub"]
 
-        email = 'test+{}@example.com'.format(random.randrange(1, 999999))
+        idp_user_res = helpers.get_api_client().retrieve_user(idp_user_uuid)
+        idp_user_res.response.raise_for_status()
+        idp_user = idp_user_res.response.json()["user"]
+
+        first_name = idp_user["firstName"]
+        last_name = idp_user["lastName"]
+        fullname = "{first_name} {last_name}".format(first_name=first_name, last_name=last_name)
+
+        user_data = idp_user.get("data", {})
+        user_data_role = get_role_with_default(user_data)
+
         return {
-            'fullname': 'test',
-            'email': email,
-            'tahoe_idp_is_organization_admin': False,
-            'tahoe_idp_is_organization_staff': True,
+            "username": idp_user.get("username", idp_user_uuid),
+            "email": idp_user["email"],
+            "fullname": fullname,
+            "first_name": first_name,
+            "last_name": last_name,
+            "tahoe_idp_is_organization_admin": is_organization_admin(user_data_role),
+            "tahoe_idp_is_organization_staff": is_organization_staff(user_data_role),
         }
-        # client_id = self.setting("KEY")  # CLIENT_ID
-        # jwt_payload = get_jwt_payload(client_id, response)
-        # auth0_user = get_api_client().get_user(jwt_payload["email"])
-        # fullname, first_name, last_name = self.get_user_names(
-        #     fullname=auth0_user.get("name")
-        # )
-        # app_metadata = auth0_user.get('app_metadata', {})
-        # metadata_role = get_role_with_default(app_metadata)
-        #
-        # nickname = auth0_user.get("nickname", jwt_payload.get("sub"))
-        #
-        # return {
-        #     "username": auth0_user.get("username", nickname),
-        #     "email": auth0_user.get("email"),
-        #     "fullname": fullname,
-        #     "first_name": first_name,
-        #     "last_name": last_name,
-        #     "tahoe_idp_is_organization_admin": is_organization_admin(metadata_role),
-        #     "tahoe_idp_is_organization_staff": is_organization_staff(metadata_role),
-        # }

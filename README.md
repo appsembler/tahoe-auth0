@@ -123,7 +123,6 @@ In your `edxapp-envs/lms.yml`:
 ```yaml
 EDXAPP_EXTRA_REQUIREMENTS:
   - name: "tahoe-idp"
-  - name: "python-jose==3.2.0"  # For Koa+ use `python-jose==3.3.0`
 
 FEATURES:
     ...

@@ -185,7 +185,7 @@ def test_update_user_email_verified(mock_update_user):
     """
     assert not mock_update_user.called
     user, _social = user_with_social_factory(social_uid='auth0|8d8be3c5f86c1a3e')
-    update_user_email(user, 'test.email@example.com', set_email_as_verified=True)
+    update_user_email(user, 'test.email@example.com', skip_email_verification=True)
     mock_update_user.assert_called_once_with(user, properties={
         'email': 'test.email@example.com',
         'email_verified': True,

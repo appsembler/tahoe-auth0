@@ -6,7 +6,7 @@ from django.views.generic import TemplateView
 
 from site_config_client.openedx import api as config_api
 
-from tahoe_idp.api_client import FusionAuthApiClient
+from .api_client import FusionAuthApiClient
 
 
 class RegistrationView(TemplateView):
