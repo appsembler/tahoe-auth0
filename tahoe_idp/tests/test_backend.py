@@ -129,12 +129,8 @@ class Auth0Test(OAuth2Test):
             "{}/oauth2/logout".format(BASE_URL),
         )
 
-    @patch('tahoe_idp.helpers.get_idp_user_from_id_token')
-    def test_get_user_id(self, mock_get_idp_user):
-        mock_get_idp_user.return_value = {
-            "id": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
-        }
-        user_id = self.backend.get_user_id("details", {'id_token': 'dummy'})
+    def test_get_user_id(self):
+        user_id = self.backend.get_user_id({'tahoe_idp_uuid': '2a106a94-c8b0-4f0b-bb69-fea0022c18d8'}, {})
         assert user_id == '2a106a94-c8b0-4f0b-bb69-fea0022c18d8'
 
     @patch('tahoe_idp.helpers.get_idp_user_from_id_token')
@@ -153,13 +149,14 @@ class Auth0Test(OAuth2Test):
 
         user_details = self.backend.get_user_details({'id_token': 'dummy'})
         assert user_details == {
-                "username": "ahmedjazzar",
-                "email": "ahmed@appsembler.com",
-                "fullname": "Ahmed Jazzar",
-                "first_name": "Ahmed",
-                "last_name": "Jazzar",
-                "tahoe_idp_is_organization_admin": False,
-                "tahoe_idp_is_organization_staff": True,
+            "username": "ahmedjazzar",
+            "email": "ahmed@appsembler.com",
+            "fullname": "Ahmed Jazzar",
+            "first_name": "Ahmed",
+            "last_name": "Jazzar",
+            "tahoe_idp_uuid": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
+            "tahoe_idp_is_organization_admin": False,
+            "tahoe_idp_is_organization_staff": True,
         }
 
     @patch('tahoe_idp.helpers.get_idp_user_from_id_token')
@@ -188,6 +185,7 @@ class Auth0Test(OAuth2Test):
             "fullname": "Ahmed Jazzar",
             "first_name": "Ahmed",
             "last_name": "Jazzar",
+            "tahoe_idp_uuid": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
             "tahoe_idp_is_organization_admin": False,
             "tahoe_idp_is_organization_staff": False,
         }

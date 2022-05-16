@@ -50,16 +50,13 @@ class TahoeIdpOAuth2(BaseOAuth2):
         A payload's userId value contains FusionAuth's unique user uuid;
         similar to this: 2a106a94-c8b0-4f0b-bb69-fea0022c18d8
         """
-        client_id = self.setting("KEY")  # CLIENT_ID
-        id_token = response['id_token']
-        idp_user = helpers.get_idp_user_from_id_token(client_id, id_token)
-        return idp_user['id']
+        return details["tahoe_idp_uuid"]
 
     def get_user_details(self, response):
         """
         Fetches the user details from response's JWT and build the social_core JSON object.
         """
-        id_token = response['id_token']
+        id_token = response["id_token"]
         client_id = self.setting("KEY")  # CLIENT_ID
 
         idp_user = helpers.get_idp_user_from_id_token(client_id, id_token)
@@ -72,11 +69,12 @@ class TahoeIdpOAuth2(BaseOAuth2):
         user_data_role = get_role_with_default(user_data)
 
         return {
-            "username": idp_user.get("username", idp_user['id']),
+            "username": idp_user.get("username", idp_user["id"]),
             "email": idp_user["email"],
             "fullname": fullname,
             "first_name": first_name,
             "last_name": last_name,
+            "tahoe_idp_uuid": idp_user["id"],
             "tahoe_idp_is_organization_admin": is_organization_admin(user_data_role),
             "tahoe_idp_is_organization_staff": is_organization_staff(user_data_role),
         }
