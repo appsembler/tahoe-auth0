@@ -11,20 +11,17 @@ from tahoe_idp.models import MagicLink, MagicLinkError
 
 
 def create_magiclink(
-    email: str,
+    username: str,
     request: HttpRequest,
     redirect_url: str = '',
 ) -> MagicLink:
-    if settings.EMAIL_IGNORE_CASE:
-        email = email.lower()
-
     limit = timezone.now() - timedelta(seconds=settings.LOGIN_REQUEST_TIME_LIMIT)  # NOQA: E501
-    over_limit = MagicLink.objects.filter(email=email, created__gte=limit)
+    over_limit = MagicLink.objects.filter(username=username, created__gte=limit)
     if over_limit:
         raise MagicLinkError('Too many magic login requests')
 
     if settings.ONE_TOKEN_PER_USER:
-        magic_links = MagicLink.objects.filter(email=email, disabled=False)
+        magic_links = MagicLink.objects.filter(username=username, disabled=False)
         magic_links.update(disabled=True)
 
     if not redirect_url:
@@ -38,7 +35,7 @@ def create_magiclink(
 
     expiry = timezone.now() + timedelta(seconds=settings.AUTH_TIMEOUT)
     magic_link = MagicLink.objects.create(
-        email=email,
+        username=username,
         token=get_random_string(length=settings.TOKEN_LENGTH),
         expiry=expiry,
         redirect_url=redirect_url,

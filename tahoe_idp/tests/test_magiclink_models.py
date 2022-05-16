@@ -16,19 +16,19 @@ from tahoe_idp.tests.magiclink_fixtures import magic_link, user  # NOQA: F401
 User = get_user_model()
 
 
-def get_magic_link_verifying_list(host, login_url, token, email):
+def get_magic_link_verifying_list(host, login_url, token, username):
     return [
-        'http://{host}{login_url}?token={token}&email={email}'.format(
+        'http://{host}{login_url}?token={token}&username={username}'.format(
             host=host,
             login_url=login_url,
             token=token,
-            email=quote(email),
+            username=quote(username),
         ),
-        'http://{host}{login_url}?email={email}&token={token}'.format(
+        'http://{host}{login_url}?username={username}&token={token}'.format(
             host=host,
             login_url=login_url,
             token=token,
-            email=quote(email),
+            username=quote(username),
         )
     ]
 
@@ -37,7 +37,7 @@ def get_magic_link_verifying_list(host, login_url, token, email):
 def test_model_string(magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
-    assert str(ml) == '{email} - {expiry}'.format(email=ml.email, expiry=ml.expiry)
+    assert str(ml) == '{username} - {expiry}'.format(username=ml.username, expiry=ml.expiry)
 
 
 @pytest.mark.django_db
@@ -52,7 +52,7 @@ def test_generate_url(settings, magic_link):  # NOQA: F811
     request.META['SERVER_NAME'] = host
     request.META['SERVER_PORT'] = 80
     ml = magic_link(request)
-    assert ml.generate_url(request) in get_magic_link_verifying_list(host, login_url, ml.token, ml.email)
+    assert ml.generate_url(request) in get_magic_link_verifying_list(host, login_url, ml.token, ml.username)
 
 
 @pytest.mark.django_db
@@ -67,7 +67,7 @@ def test_generate_url_custom_verify(settings, magic_link):  # NOQA: F811
     request.META['SERVER_NAME'] = host
     request.META['SERVER_PORT'] = 80
     ml = magic_link(request)
-    assert ml.generate_url(request) in get_magic_link_verifying_list(host, login_url, ml.token, ml.email)
+    assert ml.generate_url(request) in get_magic_link_verifying_list(host, login_url, ml.token, ml.username)
     settings.MAGICLINK_LOGIN_VERIFY_URL = 'tahoe_idp:login_verify'
     from tahoe_idp import magiclink_settings as settings
     reload(settings)
@@ -78,29 +78,20 @@ def test_validate(user, magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
     request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = ml.cookie_value
-    ml_user = ml.validate(request=request, email=user.email)
+    ml_user = ml.validate(request=request, username=user.username)
     assert ml_user == user
 
 
 @pytest.mark.django_db
-def test_validate_email_ignore_case(user, magic_link):  # NOQA: F811
+def test_validate_wrong_username(user, magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
-    request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = ml.cookie_value
-    ml_user = ml.validate(request=request, email=user.email.upper())
-    assert ml_user == user
-
-
-@pytest.mark.django_db
-def test_validate_wrong_email(user, magic_link):  # NOQA: F811
-    request = HttpRequest()
-    ml = magic_link(request)
-    email = 'fake@email.com'
+    username = 'fake_username'
     request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = ml.cookie_value
     with pytest.raises(MagicLinkError) as error:
-        ml.validate(request=request, email=email)
+        ml.validate(request=request, username=username)
 
-    error.match('Email address does not match')
+    error.match('username does not match')
 
 
 @pytest.mark.django_db
@@ -112,7 +103,7 @@ def test_validate_expired(user, magic_link):  # NOQA: F811
     ml.save()
 
     with pytest.raises(MagicLinkError) as error:
-        ml.validate(request=request, email=user.email)
+        ml.validate(request=request, username=user.username)
 
     error.match('Magic link has expired')
 
@@ -129,7 +120,7 @@ def test_validate_wrong_ip(user, magic_link):  # NOQA: F811
     ml.ip_address = '255.255.255.255'
     ml.save()
     with pytest.raises(MagicLinkError) as error:
-        ml.validate(request=request, email=user.email)
+        ml.validate(request=request, username=user.username)
 
     error.match('IP address is different from the IP address used to request '
                 'the magic link')
@@ -145,7 +136,7 @@ def test_validate_different_browser(user, magic_link):  # NOQA: F811
     ml = magic_link(request)
     request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = 'bad_value'
     with pytest.raises(MagicLinkError) as error:
-        ml.validate(request=request, email=user.email)
+        ml.validate(request=request, username=user.username)
 
     error.match('Browser is different from the browser used to request the '
                 'magic link')
@@ -163,7 +154,7 @@ def test_validate_used_times(user, magic_link):  # NOQA: F811
     ml.times_used = settings.TOKEN_USES
     ml.save()
     with pytest.raises(MagicLinkError) as error:
-        ml.validate(request=request, email=user.email)
+        ml.validate(request=request, username=user.username)
 
     error.match('Magic link has been used too many times')
 
@@ -184,7 +175,7 @@ def test_validate_superuser(settings, user, magic_link):  # NOQA: F811
     user.is_superuser = True
     user.save()
     with pytest.raises(MagicLinkError) as error:
-        ml.validate(request=request, email=user.email)
+        ml.validate(request=request, username=user.username)
 
     error.match('You can not login to a super user account using a magic link')
 
@@ -205,7 +196,7 @@ def test_validate_staff(settings, user, magic_link):  # NOQA: F811
     user.is_staff = True
     user.save()
     with pytest.raises(MagicLinkError) as error:
-        ml.validate(request=request, email=user.email)
+        ml.validate(request=request, username=user.username)
 
     error.match('You can not login to a staff account using a magic link')
 

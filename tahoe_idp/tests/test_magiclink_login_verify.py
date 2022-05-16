@@ -1,4 +1,5 @@
 from importlib import reload
+from unittest.mock import patch
 from urllib.parse import urlencode
 
 import pytest
@@ -21,13 +22,14 @@ def test_login_verify(client, settings, magic_link):  # NOQA: F811
     ml.save()
 
     params = {'token': ml.token}
-    params['email'] = ml.email
+    params['username'] = ml.username
     query = urlencode(params)
     url = '{url}?{query}'.format(url=url, query=query)
 
     cookie_name = 'magiclink{pk}'.format(pk=ml.pk)
     client.cookies = SimpleCookie({cookie_name: ml.cookie_value})
-    response = client.get(url)
+    with patch('tahoe_idp.magiclink_settings.ANONYMIZE_IP', True):
+        response = client.get(url)
     assert response.status_code == 302
     assert response.url == reverse(settings.LOGIN_REDIRECT_URL)
     assert client.cookies[cookie_name].value == ''
@@ -52,7 +54,8 @@ def test_login_verify_with_redirect(client, magic_link):  # NOQA: F811
     url = ml.generate_url(request)
 
     client.cookies = SimpleCookie({'magiclink{pk}'.format(pk=ml.pk): ml.cookie_value})
-    response = client.get(url)
+    with patch('tahoe_idp.magiclink_settings.ANONYMIZE_IP', True):
+        response = client.get(url)
     assert response.status_code == 302
     assert response.url == redirect_url
 
@@ -91,7 +94,7 @@ def test_login_verify_failed_validation(client, settings, magic_link):  # NOQA: 
     request = HttpRequest()
     ml = magic_link(request)
     params = {'token': ml.token}
-    params['email'] = ml.email
+    params['username'] = ml.username
     query = urlencode(params)
     url = '{url}?{query}'.format(url=url, query=query)
 

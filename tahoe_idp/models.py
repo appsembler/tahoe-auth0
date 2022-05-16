@@ -7,7 +7,7 @@ from django.http import HttpRequest
 from django.urls import reverse
 from django.utils import timezone
 from tahoe_idp import magiclink_settings
-from tahoe_idp.helpers import get_client_ip
+from tahoe_idp.magiclink_utils import get_client_ip
 
 User = get_user_model()
 
@@ -17,7 +17,7 @@ class MagicLinkError(Exception):
 
 
 class MagicLink(models.Model):
-    email = models.EmailField()
+    username = models.CharField()
     token = models.TextField()
     expiry = models.DateTimeField()
     redirect_url = models.TextField()
@@ -28,7 +28,7 @@ class MagicLink(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return '{email} - {expiry}'.format(email=self.email, expiry=self.expiry)
+        return '{username} - {expiry}'.format(username=self.username, expiry=self.expiry)
 
     def used(self) -> None:
         self.times_used += 1
@@ -45,8 +45,8 @@ class MagicLink(models.Model):
         url_path = reverse(magiclink_settings.LOGIN_VERIFY_URL)
 
         params = {'token': self.token}
-        if magiclink_settings.VERIFY_INCLUDE_EMAIL:
-            params['email'] = self.email
+        if magiclink_settings.VERIFY_INCLUDE_USERNAME:
+            params['username'] = self.username
         query = urlencode(params)
 
         url_path = '{url_path}?{query}'.format(url_path=url_path, query=query)
@@ -60,13 +60,10 @@ class MagicLink(models.Model):
     def validate(
         self,
         request: HttpRequest,
-        email: str = '',
+        username: str = '',
     ) -> AbstractUser:
-        if magiclink_settings.EMAIL_IGNORE_CASE and email:
-            email = email.lower()
-
-        if magiclink_settings.VERIFY_INCLUDE_EMAIL and self.email != email:
-            raise MagicLinkError('Email address does not match')
+        if magiclink_settings.VERIFY_INCLUDE_USERNAME and self.username != username:
+            raise MagicLinkError('username does not match')
 
         if timezone.now() > self.expiry:
             self.disable()
@@ -92,7 +89,7 @@ class MagicLink(models.Model):
             self.disable()
             raise MagicLinkError('Magic link has been used too many times')
 
-        user = User.objects.get(email=self.email)
+        user = User.objects.get(username=self.username)
 
         if not magiclink_settings.ALLOW_SUPERUSER_LOGIN and user.is_superuser:
             self.disable()

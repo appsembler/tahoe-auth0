@@ -34,12 +34,12 @@ class CustomUserName(CustomUserEmailOnly):
 def test_create_magiclink(settings, freezer):
     freezer.move_to('2000-01-01T00:00:00')
 
-    email = 'test@example.com'
+    username = 'test_user'
     expiry = timezone.now() + timedelta(seconds=mlsettings.AUTH_TIMEOUT)
     request = HttpRequest()
     request.META['REMOTE_ADDR'] = '127.0.0.1'
-    magic_link = create_magiclink(email, request)
-    assert magic_link.email == email
+    magic_link = create_magiclink(username, request)
+    assert magic_link.username == username
     assert len(magic_link.token) == mlsettings.TOKEN_LENGTH
     assert magic_link.expiry == expiry
     assert magic_link.redirect_url == reverse(settings.LOGIN_REDIRECT_URL)
@@ -55,7 +55,7 @@ def test_create_magiclink_require_same_ip_off_no_ip(settings):
 
     request = HttpRequest()
     request.META['REMOTE_ADDR'] = '127.0.0.1'
-    magic_link = create_magiclink('test@example.com', request)
+    magic_link = create_magiclink('test_user', request)
     assert magic_link.ip_address is None
 
 
@@ -68,60 +68,40 @@ def test_create_magiclink_none_anonymized_ip(settings):
     request = HttpRequest()
     ip_address = '127.0.0.1'
     request.META['REMOTE_ADDR'] = ip_address
-    magic_link = create_magiclink('test@example.com', request)
+    magic_link = create_magiclink('test_user', request)
     assert magic_link.ip_address == ip_address
 
 
 @pytest.mark.django_db
 def test_create_magiclink_redirect_url():
-    email = 'test@example.com'
+    username = 'test_user'
     request = HttpRequest()
     redirect_url = '/test/'
-    magic_link = create_magiclink(email, request, redirect_url=redirect_url)
-    assert magic_link.email == email
+    magic_link = create_magiclink(username, request, redirect_url=redirect_url)
+    assert magic_link.username == username
     assert magic_link.redirect_url == redirect_url
 
 
 @pytest.mark.django_db
-def test_create_magiclink_email_ignore_case():
-    email = 'TEST@example.com'
-    request = HttpRequest()
-    magic_link = create_magiclink(email, request)
-    assert magic_link.email == email.lower()
-
-
-@pytest.mark.django_db
-def test_create_magiclink_email_ignore_case_off(settings):
-    settings.MAGICLINK_EMAIL_IGNORE_CASE = False
-    from tahoe_idp import magiclink_settings as settings
-    reload(settings)
-
-    email = 'TEST@example.com'
-    request = HttpRequest()
-    magic_link = create_magiclink(email, request)
-    assert magic_link.email == email
-
-
-@pytest.mark.django_db
 def test_create_magiclink_one_token_per_user(freezer):
-    email = 'test@example.com'
+    username = 'test_user'
     request = HttpRequest()
     freezer.move_to('2000-01-01T00:00:00')
-    magic_link = create_magiclink(email, request)
+    magic_link = create_magiclink(username, request)
     assert magic_link.disabled is False
 
     freezer.move_to('2000-01-01T00:00:31')
-    create_magiclink(email, request)
+    create_magiclink(username, request)
 
     magic_link = MagicLink.objects.get(token=magic_link.token)
     assert magic_link.disabled is True
-    assert magic_link.email == email
+    assert magic_link.username == username
 
 
 @pytest.mark.django_db
 def test_create_magiclink_login_request_time_limit():
-    email = 'test@example.com'
+    username = 'test_user'
     request = HttpRequest()
-    create_magiclink(email, request)
+    create_magiclink(username, request)
     with pytest.raises(MagicLinkError):
-        create_magiclink(email, request)
+        create_magiclink(username, request)

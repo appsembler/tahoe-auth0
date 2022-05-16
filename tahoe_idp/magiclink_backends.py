@@ -3,29 +3,28 @@ import logging
 from django.contrib.auth import get_user_model
 from django.http import HttpRequest
 
-from tahoe_idp import magiclink_settings as settings
 from tahoe_idp.models import MagicLink, MagicLinkError
 
 User = get_user_model()
 log = logging.getLogger(__name__)
 
 
-class MagicLinkBackend():
+class MagicLinkBackend:
 
     def authenticate(  # nosec - disable claim from bandit that a password is hardcoded
         self,
         request: HttpRequest,
         token: str = '',
-        email: str = '',
+        username: str = '',
     ):
-        log.debug('MagicLink authenticate token: {token} - email: {email}'.format(token=token, email=email))
+        log.debug('MagicLink authenticate token: {token} - username: {username}'.format(token=token, username=username))
 
         if not token:
             log.warning('Token missing from authentication')
             return
 
-        if settings.VERIFY_INCLUDE_EMAIL and not email:
-            log.warning('Email address not supplied with token')
+        if not username:
+            log.warning('username not supplied with token')
             return
 
         try:
@@ -39,13 +38,13 @@ class MagicLinkBackend():
             return
 
         try:
-            user = magiclink.validate(request, email)
+            user = magiclink.validate(request, username)
         except MagicLinkError as error:
             log.warning(error)
             return
 
         magiclink.used()
-        log.info('{user} authenticated via MagicLink'.format(user=user))
+        log.info('{username} authenticated via MagicLink'.format(username=user.username))
         return user
 
     def get_user(self, user_id):

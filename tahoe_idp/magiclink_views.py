@@ -6,7 +6,6 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 
-
 from tahoe_idp import magiclink_settings as settings
 
 from tahoe_idp.models import MagicLink, MagicLinkError
@@ -22,8 +21,8 @@ class LoginVerify(TemplateView):
 
     def get(self, request, *args, **kwargs):
         token = request.GET.get('token')
-        email = request.GET.get('email')
-        user = authenticate(request, token=token, email=email)
+        username = request.GET.get('username')
+        user = authenticate(request, token=token, username=username)
         if not user:
             if settings.LOGIN_FAILED_REDIRECT:
                 redirect_url = get_url_path(settings.LOGIN_FAILED_REDIRECT)
@@ -42,14 +41,14 @@ class LoginVerify(TemplateView):
                 return self.render_to_response(context)
 
             try:
-                magiclink.validate(request, email)
+                magiclink.validate(request, username)
             except MagicLinkError as error:
                 context['login_error'] = str(error)
 
             return self.render_to_response(context)
 
         login(request, user)
-        log.info('Login successful for {email}'.format(email=email))
+        log.info('Login successful for {username}'.format(username=username))
 
         response = self.login_complete_action()
 
