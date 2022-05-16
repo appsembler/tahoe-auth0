@@ -75,7 +75,7 @@ def update_user_email(user, email, skip_email_verification=False):
     }
 
     if skip_email_verification:
-        properties['email_verified'] = True
+        properties['skipVerification'] = True
 
     return update_user(user, properties=properties)
 

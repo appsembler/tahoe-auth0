@@ -6,7 +6,7 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from requests import HTTPError
 from social_django.models import UserSocialAuth
-from unittest.mock import patch
+from unittest.mock import patch, call
 
 from tahoe_idp.api import (
     get_tahoe_idp_id_by_user,
@@ -170,6 +170,7 @@ def test_failed_update_user_helper(requests_mock):
 
 
 @patch('tahoe_idp.api.update_user')
+@mock_tahoe_idp_api_settings
 def test_update_user_email(mock_update_user):
     """
     Test `update_user_email`.
@@ -177,7 +178,11 @@ def test_update_user_email(mock_update_user):
     assert not mock_update_user.called
     user, _social = user_with_social_factory(social_uid='c80f5080-d50c-11ec-b5e5-5b30b2c6a1d9')
     update_user_email(user, 'test.email@example.com')
-    mock_update_user.assert_called_once_with(user, properties={'email': 'test.email@example.com'})
+    mock_update_user.assert_called_once_with(user, properties={
+        'user': {
+            'email': 'test.email@example.com',
+        },
+    })
 
 
 @patch('tahoe_idp.api.update_user')
@@ -189,6 +194,9 @@ def test_update_user_email_verified(mock_update_user):
     user, _social = user_with_social_factory(social_uid='c80f5080-d50c-11ec-b5e5-5b30b2c6a1d9')
     update_user_email(user, 'test.email@example.com', skip_email_verification=True)
     mock_update_user.assert_called_once_with(user, properties={
-        'email': 'test.email@example.com',
-        'email_verified': True,
+        'user': {
+            'email': 'test.email@example.com',
+        },
+        'skipVerification': True,
     })
+
