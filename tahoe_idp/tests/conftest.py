@@ -22,7 +22,7 @@ def mock_tahoe_idp_settings(monkeypatch, settings):
         return True
 
     settings.TAHOE_IDP_CONFIGS = {
-        'BASE_URL': 'https://domain.world',
+        'BASE_URL': 'https://domain',
         'API_KEY': 'dummy-client-secret',
     }
 

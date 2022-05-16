@@ -9,8 +9,6 @@ from unittest.mock import patch
 from httpretty import HTTPretty
 from jose import jwt
 
-from tahoe_idp.backend import TahoeIdpOAuth2
-
 from .oauth import OAuth2Test
 from .conftest import mock_tahoe_idp_api_settings, MOCK_TENANT_ID
 
@@ -37,46 +35,51 @@ JWK_KEY = {
 
 JWK_PUBLIC_KEY = {key: value for key, value in JWK_KEY.items() if key != "d"}
 
-# patch_get_user = patch.object(
-#     FusionAuthApiClient, "get_user", return_value={"username": expected_username}
-# )
-# patch_get_access_token = patch.object(FusionAuthApiClient, "_get_access_token")
-# patch_get_org_id = patch.object(
-#     FusionAuthApiClient, "_get_auth0_tenant_id", return_value=tenant_id
-# )
-# return patch_get_user(patch_get_access_token(patch_get_org_id(test_func)))
+BASE_URL = "https://domain"
+
+IDP_USER_BODY = {
+    "active": True,
+    "data": {
+        "platform_role": "Staff",
+    },
+    "email": "omar+fusion.auth.trial@appsembler.com",
+    "encryptionScheme": "salted-pbkdf2-hmac-sha256",
+    "firstName": "Ahmed",
+    "id": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
+    "lastName": "Jazzar",
+    "lastUpdateInstant": 1652594234294,
+    "tenantId": "aa4a50e3-0d57-d047-6618-0aea1efadf74",
+    "username": "ahmedjazzar",
+}
+
+ACCESS_TOKEN_BODY = json.dumps(
+    {
+        "access_token": "foobar",
+        "token_type": "bearer",
+        "expires_in": 86400,
+        "id_token": jwt.encode(
+            {
+                "sub": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
+                "iss": "{}/".format(BASE_URL),
+            },
+            JWK_KEY,
+            algorithm="RS256",
+        ),
+    }
+)
 
 
 @pytest.mark.usefixtures('mock_tahoe_idp_settings')
 class Auth0Test(OAuth2Test):
     backend_path = "tahoe_idp.backend.TahoeIdpOAuth2"
-    base_url = "https://domain.world"
-    access_token_body = json.dumps(
-        {
-            "access_token": "foobar",
-            "token_type": "bearer",
-            "expires_in": 86400,
-            "id_token": jwt.encode(
-                {
-                    "nickname": "foobar",
-                    "email": "foobar@auth0.com",
-                    "name": "John Doe",
-                    "picture": "http://example.com/image.png",
-                    "sub": "123456",
-                    "iss": "{}/".format(base_url),
-                },
-                JWK_KEY,
-                algorithm="RS256",
-            ),
-        }
-    )
-    expected_username = "foobar"
+    access_token_body = ACCESS_TOKEN_BODY
     tenant_id = MOCK_TENANT_ID
-    jwks_url = "{}/.well-known/jwks.json".format(base_url)
+    expected_username = IDP_USER_BODY['username']
+    jwks_url = "{}/.well-known/jwks.json".format(BASE_URL)
 
     def extra_settings(self):
         settings = super().extra_settings()
-        settings["SOCIAL_AUTH_" + self.name + "_DOMAIN"] = self.base_url
+        settings["SOCIAL_AUTH_" + self.name + "_DOMAIN"] = BASE_URL
         return settings
 
     def auth_handlers(self, start_url):
@@ -89,11 +92,15 @@ class Auth0Test(OAuth2Test):
         return super().auth_handlers(start_url)
 
     @mock_tahoe_idp_api_settings
-    def test_login(self, *args):
+    @patch('tahoe_idp.helpers.fusionauth_retrieve_user')
+    def test_login(self, mock_fa_retrieve_user):
+        mock_fa_retrieve_user.return_value = IDP_USER_BODY
         self.do_login()
 
     @mock_tahoe_idp_api_settings
-    def test_partial_pipeline(self, *args):
+    @patch('tahoe_idp.helpers.fusionauth_retrieve_user')
+    def test_partial_pipeline(self, mock_fa_retrieve_user):
+        mock_fa_retrieve_user.return_value = IDP_USER_BODY
         self.do_partial_pipeline()
 
     @mock_tahoe_idp_api_settings
@@ -105,97 +112,82 @@ class Auth0Test(OAuth2Test):
     @mock_tahoe_idp_api_settings
     def test_authorization_url(self, *args):
         self.assertEqual(
-            self.backend.authorization_url(), "{}/oauth2/authorize".format(self.base_url)
+            self.backend.authorization_url(), "{}/oauth2/authorize".format(BASE_URL)
         )
 
     @mock_tahoe_idp_api_settings
     def test_access_token_url(self, *args):
         self.assertEqual(
             self.backend.access_token_url(),
-            "{}/oauth2/token".format(self.base_url),
+            "{}/oauth2/token".format(BASE_URL),
         )
 
     @mock_tahoe_idp_api_settings
     def test_revoke_token_url(self, *args):
         self.assertEqual(
             self.backend.revoke_token_url("token", "uid"),
-            "{}/oauth2/logout".format(self.base_url),
+            "{}/oauth2/logout".format(BASE_URL),
         )
 
-    @mock_tahoe_idp_api_settings
-    @patch('tahoe_idp.helpers.get_jwt_payload')
-    def test_get_user_id(self, mock_get_payload, *args):
-        id_token = self.get_id_token()
-        mock_get_payload.return_value = id_token
+    @patch('tahoe_idp.helpers.get_idp_user_from_id_token')
+    def test_get_user_id(self, mock_get_idp_user):
+        mock_get_idp_user.return_value = {
+            "id": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
+        }
+        user_id = self.backend.get_user_id("details", {'id_token': 'dummy'})
+        assert user_id == '2a106a94-c8b0-4f0b-bb69-fea0022c18d8'
 
-        user_id = self.backend.get_user_id("details", "response")
-
-        self.assertEqual(user_id, id_token["sub"])
-
-    @patch.object(TahoeIdpOAuth2, "get_jwt_payload")
-    @mock_tahoe_idp_api_settings
-    def test_get_user_details(self, mock_get_user, *args):
-        mock_get_user.return_value = {
-            "username": self.expected_username,
+    @patch('tahoe_idp.helpers.get_idp_user_from_id_token')
+    def test_get_user_details(self, mock_get_idp_user):
+        mock_get_idp_user.return_value = {
             "email": "ahmed@appsembler.com",
-            "name": "Ahmed Jazzar",
-            "app_metadata": {
-                "role": "Staff",
+            "firstName": "Ahmed",
+            "id": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
+            "lastName": "Jazzar",
+            "tenantId": "aa4a50e3-0d57-d047-6618-0aea1efadf74",
+            "username": "ahmedjazzar",
+            "data": {
+                "platform_role": "Staff",
             }
         }
 
-        user_details = self.backend.get_user_details("response")
-        self.assertEqual(
-            user_details,
-            {
-                "username": self.expected_username,
+        user_details = self.backend.get_user_details({'id_token': 'dummy'})
+        assert user_details == {
+                "username": "ahmedjazzar",
                 "email": "ahmed@appsembler.com",
                 "fullname": "Ahmed Jazzar",
                 "first_name": "Ahmed",
                 "last_name": "Jazzar",
-                "auth0_is_organization_admin": False,
-                "auth0_is_organization_staff": True,
-            },
-        )
+                "tahoe_idp_is_organization_admin": False,
+                "tahoe_idp_is_organization_staff": True,
+        }
 
-    def test_build_user_details_with_no_role_or_app_metadata(self):
+    @patch('tahoe_idp.helpers.get_idp_user_from_id_token')
+    def test_build_user_details_with_no_role_or_app_metadata(self, mock_get_idp_user):
         """
         Ensure the backend don't fail on missing `app_metadata`.
 
         It should assume a safe default role (Learner).
         """
-        auth0_user = {
-            "username": self.expected_username,
+        mock_get_idp_user.return_value = {
+          "email": "ahmed@appsembler.com",
+          "firstName": "Ahmed",
+          "id": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
+          "lastName": "Jazzar",
+          "tenantId": "aa4a50e3-0d57-d047-6618-0aea1efadf74",
+          "username": "ahmedjazzar",
+        }
+
+        user_details = self.backend.get_user_details({
+            'id_token': 'dummy'
+        })
+
+        assert user_details == {
+            "username": "ahmedjazzar",
             "email": "ahmed@appsembler.com",
-            "name": "Ahmed Jazzar",
-            # Not passing `app_metadata` on purpose.
+            "fullname": "Ahmed Jazzar",
+            "first_name": "Ahmed",
+            "last_name": "Jazzar",
+            "tahoe_idp_is_organization_admin": False,
+            "tahoe_idp_is_organization_staff": False,
         }
-        jwt_payload = {
-            "sub": "auth0|a0d9hszw742wd7hkgwha",
-        }
-
-        user_details = self.backend.get_user_details(
-            jwt_payload=jwt_payload,
-            auth0_user=auth0_user,
-        )
-        self.assertEqual(
-            user_details,
-            {
-                "username": self.expected_username,
-                "email": "ahmed@appsembler.com",
-                "fullname": "Ahmed Jazzar",
-                "first_name": "Ahmed",
-                "last_name": "Jazzar",
-                "auth0_is_organization_admin": False,
-                "auth0_is_organization_staff": False,
-            },
-        )
-
-    def get_id_token(self):
-        access_token = json.loads(self.access_token_body)
-        return jwt.decode(
-            access_token["id_token"],
-            JWK_KEY,
-            algorithms=["RS256"],
-            options={"verify_signature": False},
-        )

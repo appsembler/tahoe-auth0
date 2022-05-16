@@ -178,3 +178,16 @@ def get_jwt_payload(client_id, id_token):
         issuer=issuer,
         options=get_id_jwt_decode_options(),
     )
+
+
+def fusionauth_retrieve_user(user_uuid):
+    idp_user_res = get_api_client().retrieve_user(user_uuid)
+    idp_user_res.response.raise_for_status()
+    return idp_user_res.response.json()["user"]
+
+
+def get_idp_user_from_id_token(client_id, id_token):
+    jwt_payload = get_jwt_payload(client_id, id_token)
+    idp_user_uuid = jwt_payload["sub"]
+    return fusionauth_retrieve_user(idp_user_uuid)
+

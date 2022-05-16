@@ -65,7 +65,7 @@ def test_password_reset_helper(requests_mock):
     Password reset can be requested.
     """
     requests_mock.post(
-        'https://domain.world/dbconnections/change_password',
+        'https://domain/dbconnections/change_password',
         headers={
             'content-type': 'application/json',
         },
@@ -82,7 +82,7 @@ def test_password_reset_helper_unauthorized(requests_mock):
     Ensure an error is raised if something goes wrong.
     """
     requests_mock.post(
-        'https://domain.world/dbconnections/change_password',
+        'https://domain/dbconnections/change_password',
         headers={
             'content-type': 'application/json',
         },
@@ -134,7 +134,7 @@ def test_update_user_helper(requests_mock):
     Can update user.
     """
     requests_mock.patch(
-        'https://domain.world/api/v2/users/auth0|8d8be3c5f86c1a3e',
+        'https://domain/api/v2/users/auth0|8d8be3c5f86c1a3e',
         headers={
             'content-type': 'application/json',
         },
@@ -153,7 +153,7 @@ def test_failed_update_user_helper(requests_mock):
     Ensure an error is raised if something goes wrong with `update_user`.
     """
     requests_mock.patch(
-        'https://domain.world/api/v2/users/auth0|a4f92ba3f42435cd',
+        'https://domain/api/v2/users/auth0|a4f92ba3f42435cd',
         headers={
             'content-type': 'application/json',
         },
