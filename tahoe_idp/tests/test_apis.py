@@ -65,7 +65,7 @@ def test_password_reset_helper(requests_mock):
     Password reset can be requested.
     """
     requests_mock.post(
-        'https://domain/dbconnections/change_password',
+        'https://domain/api/user/forgot-password',
         headers={
             'content-type': 'application/json',
         },
@@ -82,7 +82,7 @@ def test_password_reset_helper_unauthorized(requests_mock):
     Ensure an error is raised if something goes wrong.
     """
     requests_mock.post(
-        'https://domain/dbconnections/change_password',
+        'https://domain/api/user/forgot-password',
         headers={
             'content-type': 'application/json',
         },
@@ -133,14 +133,15 @@ def test_update_user_helper(requests_mock):
     """
     Can update user.
     """
+    user_uuid = 'c80f5080-d50c-11ec-b5e5-5b30b2c6a1d9'
     requests_mock.patch(
-        'https://domain/api/v2/users/auth0|8d8be3c5f86c1a3e',
+        'https://domain/api/user/{user_uuid}'.format(user_uuid=user_uuid),
         headers={
             'content-type': 'application/json',
         },
-        text='success',
+        text='{"success": True}',
     )
-    user, _social = user_with_social_factory(social_uid='auth0|8d8be3c5f86c1a3e')
+    user, _social = user_with_social_factory(social_uid=user_uuid)
     response = update_user(user, {
         'email': 'new_email@example.local',
     })
@@ -152,15 +153,16 @@ def test_failed_update_user_helper(requests_mock):
     """
     Ensure an error is raised if something goes wrong with `update_user`.
     """
+    user_uuid = 'c80f5080-d50c-11ec-b5e5-5b30b2c6a1d9'
     requests_mock.patch(
-        'https://domain/api/v2/users/auth0|a4f92ba3f42435cd',
+        'https://domain/api/user/{user_uuid}'.format(user_uuid=user_uuid),
         headers={
             'content-type': 'application/json',
         },
         status_code=400,  # Simulate an error
-        text='Connection does not exist',
+        text='{"message": "Connection does not exist"}',
     )
-    user, _social = user_with_social_factory(social_uid='auth0|a4f92ba3f42435cd')
+    user, _social = user_with_social_factory(social_uid=user_uuid)
     with pytest.raises(HTTPError, match='400 Client Error'):
         update_user(user, properties={
             'name': 'new name',
@@ -173,7 +175,7 @@ def test_update_user_email(mock_update_user):
     Test `update_user_email`.
     """
     assert not mock_update_user.called
-    user, _social = user_with_social_factory(social_uid='auth0|8d8be3c5f86c1a3e')
+    user, _social = user_with_social_factory(social_uid='c80f5080-d50c-11ec-b5e5-5b30b2c6a1d9')
     update_user_email(user, 'test.email@example.com')
     mock_update_user.assert_called_once_with(user, properties={'email': 'test.email@example.com'})
 
@@ -184,7 +186,7 @@ def test_update_user_email_verified(mock_update_user):
     Test `update_user_email` with verified.
     """
     assert not mock_update_user.called
-    user, _social = user_with_social_factory(social_uid='auth0|8d8be3c5f86c1a3e')
+    user, _social = user_with_social_factory(social_uid='c80f5080-d50c-11ec-b5e5-5b30b2c6a1d9')
     update_user_email(user, 'test.email@example.com', skip_email_verification=True)
     mock_update_user.assert_called_once_with(user, properties={
         'email': 'test.email@example.com',

@@ -23,7 +23,10 @@ def request_password_reset(email):
     Start password reset email for Username|Password Database Connection users.
     """
     api_client = helpers.get_api_client()
-    return api_client.forgot_password({'loginId': email})
+    client_response = api_client.forgot_password({'loginId': email})
+    http_response = client_response.response
+    http_response.raise_for_status()
+    return http_response
 
 
 def get_tahoe_idp_id_by_user(user):
@@ -52,7 +55,13 @@ def update_user(user, properties):
     """
     api_client = helpers.get_api_client()
     idp_user_id = get_tahoe_idp_id_by_user(user)
-    return api_client.patch_user(user_id=idp_user_id, request=properties)
+    client_response = api_client.patch_user(
+        user_id=idp_user_id,
+        request=properties,
+    )
+    http_response = client_response.response
+    http_response.raise_for_status()
+    return http_response
 
 
 def update_user_email(user, email, skip_email_verification=False):
@@ -68,4 +77,5 @@ def update_user_email(user, email, skip_email_verification=False):
     if skip_email_verification:
         properties['email_verified'] = True
 
-    update_user(user, properties=properties)
+    return update_user(user, properties=properties)
+
