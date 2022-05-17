@@ -4,9 +4,7 @@ Helpers
 
 import logging
 
-import requests
 from fusionauth.fusionauth_client import FusionAuthClient
-from jose import jwt
 from site_config_client.openedx import api as config_client_api
 
 from django.conf import settings
