@@ -10,6 +10,3 @@ class TahoeIdpConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
 
     plugin_app = {}
-
-    def ready(self):
-        logger.debug("Tahoe IdP plugin is ready.")
