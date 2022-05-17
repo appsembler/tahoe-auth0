@@ -1,7 +1,10 @@
 # Tahoe Identity Provider [![CI](https://github.com/appsembler/tahoe-idp/actions/workflows/tests.yml/badge.svg)](https://github.com/appsembler/tahoe-idp/actions/workflows/tests.yml) ![Black code style](https://img.shields.io/badge/code%20style-black-000000.svg)
 
-A package of IdP/Auth0 user authentication modules designed to work in Open edX.
+A package of IdP user authentication modules designed to work in Open edX.
 
+
+## README NEEDS UPDATE
+The readme is obsolete because this package is now using FusionAuth instead of Auth0.
 
 
 ## 0. Prerequisites

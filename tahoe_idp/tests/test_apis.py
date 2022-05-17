@@ -97,7 +97,7 @@ def test_get_tahoe_idp_id_by_user():
     """
     Tests for `get_tahoe_idp_id_by_user` validation and errors.
     """
-    social_id = 'auth0|bd7793e40ca2d0ca'
+    social_id = 'bd7793e40ca2d0ca'
     user, social = user_with_social_factory(social_uid=social_id)
     assert get_tahoe_idp_id_by_user(user=user) == social_id
 
@@ -112,12 +112,12 @@ def test_get_tahoe_idp_id_by_user_validation():
     with pytest.raises(ValueError, match='Non-anonymous User should be provided'):
         get_tahoe_idp_id_by_user(user=AnonymousUser())
 
-    user_without_auth0_id = user_factory()
+    user_without_idp_id = user_factory()
     with pytest.raises(ObjectDoesNotExist):  # Should fail for malformed data
-        get_tahoe_idp_id_by_user(user=user_without_auth0_id)
+        get_tahoe_idp_id_by_user(user=user_without_idp_id)
 
 
-def test_get_tahoe_idp_id_by_user_two_auth0_ids():
+def test_get_tahoe_idp_id_by_user_two_idp_ids():
     """
     Tests for `get_tahoe_idp_id_by_user` fail for malformed data.
     """

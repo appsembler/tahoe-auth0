@@ -1,6 +1,6 @@
 """
 Most of the tests here are unique to us. However, the work is Inspired by:
-https://github.com/python-social-auth/social-core/blob/master/social_core/backends/auth0.py
+https://github.com/python-social-auth/social-core/blob/master/social_core/backends/
 """
 import json
 import pytest
@@ -70,7 +70,7 @@ ACCESS_TOKEN_BODY = json.dumps(
 
 
 @pytest.mark.usefixtures('mock_tahoe_idp_settings')
-class Auth0Test(OAuth2Test):
+class TahoeIdPBackendTest(OAuth2Test):
     backend_path = "tahoe_idp.backend.TahoeIdpOAuth2"
     access_token_body = ACCESS_TOKEN_BODY
     tenant_id = MOCK_TENANT_ID

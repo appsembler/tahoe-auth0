@@ -26,10 +26,10 @@ class TahoeIdpOAuth2(BaseOAuth2):
         """
         Overrides the parent's class `auth_params` to add the organization parameter
         to the auth request.
-        The Auth0 API requires us to pass the organization ID since we are not going
+        The API requires us to pass the tenant ID since we are not going
         to ask the user to manually enter their organization name in the login form.
         If we decide against this, we need to enable `Display Organization Prompt` in
-        Auth0 Management Console.
+        FusionAuth Management Console.
         """
         params = super().auth_params(state=state)
         params["tenantId"] = helpers.get_tenant_id()

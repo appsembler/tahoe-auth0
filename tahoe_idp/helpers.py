@@ -150,17 +150,15 @@ def get_jwt_payload(client_id, id_token):
     Verifies and returns a JWT token payload from the response. A normal returned
     payload looks like the following:
         {
-            'iss': 'https://<tenant>.us.auth0.com/',
+            'iss': N/A,
             'name': 'Ahmed Jazzar',
             'email_verified': False,
             'picture': 'https://s.gravatar.com/avatar/abcd.png',
             'exp': 1633164125,
-            'sub': 'auth0|61578ee61e38d9006859b612',
+            'sub': '659dc4c4-d5be-11ec-8b63-8ff1c112ea18',
             'email': 'ahmed@appsembler.com',
             'updated_at': '2021-10-01T22:42:54.841Z',
             'iat': 1633128125,
-            'nickname': 'ahmed+w0crpcxx7rirspdang',
-            'org_id': 'org_2ud2MmLH8vB35m01',
             'aud': '9TbUCXJ9F3u3Q5jyRpOWuKaybiCk3rEa'
         }
     """

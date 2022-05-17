@@ -31,7 +31,7 @@ def request_password_reset(email):
 
 def get_tahoe_idp_id_by_user(user):
     """
-    Get auth0 unique ID for a Django user.
+    Get Tahoe IdP unique ID for a Django user.
 
     This helper uses the `social_django` app.
     """
@@ -49,7 +49,7 @@ def get_tahoe_idp_id_by_user(user):
 
 def update_user(user, properties):
     """
-    Update Auth0 user properties via PATCH /api/user/{userId}.
+    Update user properties via PATCH /api/user/{userId}.
 
     See: https://fusionauth.io/docs/v1/tech/apis/users#update-a-user
     """

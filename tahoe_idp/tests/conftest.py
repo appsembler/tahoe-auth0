@@ -14,7 +14,7 @@ MOCK_TENANT_ID = '479d8c4e-d441-11ec-8ebb-6f8318ddff9a'
 @pytest.fixture(scope='function')
 def mock_tahoe_idp_settings(monkeypatch, settings):
     """
-    Mock configs to enable auth0 and set TAHOE_IDP_CONFIGS.
+    Mock configs to enable Tahoe IdP and set TAHOE_IDP_CONFIGS.
     """
     def mock_is_tahoe_idp_enabled():
         """Mock for `is_tahoe_idp_enabled` to return always True."""

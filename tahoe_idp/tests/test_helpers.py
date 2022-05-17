@@ -69,7 +69,7 @@ def test_fusionauth_retrieve_user(requests_mock):
 
 
 @ddt
-class TestIsAuth0Enabled(TestCase):
+class TestIsTahoeIdPEnabled(TestCase):
     @unpack
     @data(
         {"configuration_flag": None, "feature_flag": True, "is_enabled": True},
@@ -109,7 +109,7 @@ class TestIsAuth0Enabled(TestCase):
             is_tahoe_idp_enabled()
 
     @override_site_config("admin", ENABLE_TAHOE_IDP="True")
-    def test_auth0_settings_enabled_not_boolean(self):
+    def test_idp_settings_enabled_not_boolean(self):
         message = "`ENABLE_TAHOE_IDP` must be of boolean type"
         with self.assertRaisesMessage(ImproperlyConfigured, message):
             is_tahoe_idp_enabled()
@@ -122,11 +122,11 @@ class TestIsAuth0Enabled(TestCase):
         },
     )
     @override_site_config("admin", ENABLE_TAHOE_IDP=True)
-    def test_auth0_enabled(self):
+    def test_tahoe_idp_enabled(self):
         self.assertEqual(True, is_tahoe_idp_enabled())
 
 
-class TestAuth0EnabledDecorator(TestCase):
+class TestTahoeIdPEnabledHelper(TestCase):
     @patch("tahoe_idp.helpers.is_tahoe_idp_enabled", return_value=False)
     def test_not_enabled(self, mock_is_tahoe_idp_enabled):
         with self.assertRaises(EnvironmentError):
