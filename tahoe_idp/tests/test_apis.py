@@ -6,7 +6,7 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from requests import HTTPError
 from social_django.models import UserSocialAuth
-from unittest.mock import patch, call
+from unittest.mock import patch
 
 from tahoe_idp.api import (
     get_tahoe_idp_id_by_user,
@@ -199,4 +199,3 @@ def test_update_user_email_verified(mock_update_user):
         },
         'skipVerification': True,
     })
-

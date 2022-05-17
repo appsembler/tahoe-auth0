@@ -190,4 +190,3 @@ def get_idp_user_from_id_token(client_id, id_token):
     jwt_payload = get_jwt_payload(client_id, id_token)
     idp_user_uuid = jwt_payload["sub"]
     return fusionauth_retrieve_user(idp_user_uuid)
-

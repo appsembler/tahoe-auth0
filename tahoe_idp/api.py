@@ -78,4 +78,3 @@ def update_user_email(user, email, set_email_as_verified=False):
         properties['skipVerification'] = True
 
     return update_user(user, properties=properties)
-
