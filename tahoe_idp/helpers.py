@@ -66,19 +66,25 @@ def fail_if_tahoe_idp_not_enabled():
         raise EnvironmentError("Tahoe IdP is not enabled in your project")
 
 
-def get_idp_base_url():
+def get_required_setting(setting_name):
     """
-    A property method used to fetch IdP domain from Django's settings variable.
+    Get a required Tahoe Identity Provider setting from TAHOE_IDP_CONFIGS.
 
     We will raise an ImproperlyConfigured error if we couldn't find the setting.
     """
     fail_if_tahoe_idp_not_enabled()
-    domain = settings.TAHOE_IDP_CONFIGS.get("BASE_URL")
+    setting_value = settings.TAHOE_IDP_CONFIGS.get(setting_name)
+    if not setting_value:
+        raise ImproperlyConfigured("Tahoe IdP `{}` cannot be empty".format(setting_name))
 
-    if not domain:
-        raise ImproperlyConfigured("Tahoe IdP `BASE_URL` cannot be empty")
+    return setting_value
 
-    return domain
+
+def get_idp_base_url():
+    """
+    Get IdP base_url from Django's settings variable.
+    """
+    return get_required_setting('BASE_URL')
 
 
 def get_tenant_id():
@@ -98,13 +104,7 @@ def get_api_key():
     """
     Get API_KEY for the FusionAuth API client.
     """
-    fail_if_tahoe_idp_not_enabled()
-    api_key = settings.TAHOE_IDP_CONFIGS.get("API_KEY")
-
-    if not api_key:
-        raise ImproperlyConfigured("Tahoe IdP `API_KEY` cannot be empty")
-
-    return api_key
+    return get_required_setting("API_KEY")
 
 
 def get_id_jwt_decode_options():

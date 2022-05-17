@@ -1,3 +1,4 @@
+import pytest
 from unittest.mock import patch
 
 from ddt import data, ddt, unpack
@@ -8,7 +9,10 @@ from site_config_client.openedx.test_helpers import override_site_config
 
 from tahoe_idp.helpers import (
     fail_if_tahoe_idp_not_enabled,
+    fusionauth_retrieve_user,
     get_idp_base_url,
+    get_required_setting,
+    get_tenant_id,
     is_tahoe_idp_enabled,
 )
 
@@ -25,6 +29,43 @@ class TestBaseURL(TestCase):
     def test_with_base_url(self):
         base_url = get_idp_base_url()
         self.assertEqual(base_url, "http://fa:9100")
+
+
+@override_settings(TAHOE_IDP_CONFIGS={"BASE_URL": "http://fa:9100"})
+@override_site_config("admin", ENABLE_TAHOE_IDP=True)
+def test_required_setting_not_available():
+    with pytest.raises(ImproperlyConfigured, match='`API_KEY` cannot be empty'):
+        get_required_setting("API_KEY")
+
+
+@override_settings(TAHOE_IDP_CONFIGS={"BASE_URL": "http://fa:9100"})
+@override_site_config("admin", ENABLE_TAHOE_IDP=True)
+def test_missing_required_tenant_id():
+    with pytest.raises(ImproperlyConfigured, match='`IDP_TENANT_ID` cannot be empty'):
+        get_tenant_id()
+
+
+@override_settings(TAHOE_IDP_CONFIGS={"BASE_URL": "http://fa:9100", "API_KEY": "testkey"})
+@override_site_config("admin", ENABLE_TAHOE_IDP=True, IDP_TENANT_ID="tenant-xyz")
+def test_fusionauth_retrieve_user(requests_mock):
+    requests_mock.get(
+        "/api/user/855760ec-d5bc-11ec-9f0a-c3fd7676521c",
+        headers={
+            'content-type': 'application/json',
+        },
+        status_code=200,
+        json={
+            "user": {
+                "id": "855760ec-d5bc-11ec-9f0a-c3fd7676521c",
+                "username": "ahmedjazzar",
+            },
+        },
+    )
+    user = fusionauth_retrieve_user("855760ec-d5bc-11ec-9f0a-c3fd7676521c")
+    assert user == {
+        "id": "855760ec-d5bc-11ec-9f0a-c3fd7676521c",
+        "username": "ahmedjazzar",
+    }
 
 
 @ddt
