@@ -64,7 +64,7 @@ def update_user(user, properties):
     return http_response
 
 
-def update_user_email(user, email, skip_email_verification=False):
+def update_user_email(user, email, set_email_as_verified=False):
     """
     Update user email via PATCH /api/user/{userId}.
     """
@@ -74,7 +74,7 @@ def update_user_email(user, email, skip_email_verification=False):
         },
     }
 
-    if skip_email_verification:
+    if set_email_as_verified:
         properties['skipVerification'] = True
 
     return update_user(user, properties=properties)
