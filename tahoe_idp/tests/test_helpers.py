@@ -41,12 +41,12 @@ def test_required_setting_not_available():
 @override_settings(TAHOE_IDP_CONFIGS={"BASE_URL": "http://fa:9100"})
 @override_site_config("admin", ENABLE_TAHOE_IDP=True)
 def test_missing_required_tenant_id():
-    with pytest.raises(ImproperlyConfigured, match='`IDP_TENANT_ID` cannot be empty'):
+    with pytest.raises(ImproperlyConfigured, match='`TAHOE_IDP_TENANT_ID` cannot be empty'):
         get_tenant_id()
 
 
 @override_settings(TAHOE_IDP_CONFIGS={"BASE_URL": "http://fa:9100", "API_KEY": "testkey"})
-@override_site_config("admin", ENABLE_TAHOE_IDP=True, IDP_TENANT_ID="tenant-xyz")
+@override_site_config("admin", ENABLE_TAHOE_IDP=True, TAHOE_IDP_TENANT_ID="tenant-xyz")
 def test_fusionauth_retrieve_user(requests_mock):
     requests_mock.get(
         "/api/user/855760ec-d5bc-11ec-9f0a-c3fd7676521c",

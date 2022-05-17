@@ -7,7 +7,6 @@ import pytest
 from unittest.mock import patch
 
 from httpretty import HTTPretty
-from jose import jwt
 
 from .oauth import OAuth2Test
 from .conftest import mock_tahoe_idp_api_settings, MOCK_TENANT_ID
@@ -57,14 +56,7 @@ ACCESS_TOKEN_BODY = json.dumps(
         "access_token": "foobar",
         "token_type": "bearer",
         "expires_in": 86400,
-        "id_token": jwt.encode(
-            {
-                "sub": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
-                "iss": "{}/".format(BASE_URL),
-            },
-            JWK_KEY,
-            algorithm="RS256",
-        ),
+        "userId": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
     }
 )
 
@@ -79,7 +71,7 @@ class TahoeIdPBackendTest(OAuth2Test):
 
     def extra_settings(self):
         settings = super().extra_settings()
-        settings["SOCIAL_AUTH_" + self.name + "_DOMAIN"] = BASE_URL
+        settings["SOCIAL_AUTH_" + self.name + "_BASE_URL"] = BASE_URL
         return settings
 
     def auth_handlers(self, start_url):
@@ -133,7 +125,7 @@ class TahoeIdPBackendTest(OAuth2Test):
         user_id = self.backend.get_user_id({'tahoe_idp_uuid': '2a106a94-c8b0-4f0b-bb69-fea0022c18d8'}, {})
         assert user_id == '2a106a94-c8b0-4f0b-bb69-fea0022c18d8'
 
-    @patch('tahoe_idp.helpers.get_idp_user_from_id_token')
+    @patch('tahoe_idp.helpers.fusionauth_retrieve_user')
     def test_get_user_details(self, mock_get_idp_user):
         mock_get_idp_user.return_value = {
             "email": "ahmed@appsembler.com",
@@ -147,7 +139,10 @@ class TahoeIdPBackendTest(OAuth2Test):
             }
         }
 
-        user_details = self.backend.get_user_details({'id_token': 'dummy'})
+        user_details = self.backend.get_user_details({
+            "userId": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
+        })
+
         assert user_details == {
             "username": "ahmedjazzar",
             "email": "ahmed@appsembler.com",
@@ -159,7 +154,7 @@ class TahoeIdPBackendTest(OAuth2Test):
             "tahoe_idp_is_organization_staff": True,
         }
 
-    @patch('tahoe_idp.helpers.get_idp_user_from_id_token')
+    @patch('tahoe_idp.helpers.fusionauth_retrieve_user')
     def test_build_user_details_with_no_role_or_app_metadata(self, mock_get_idp_user):
         """
         Ensure the backend don't fail on missing `app_metadata`.
@@ -176,7 +171,7 @@ class TahoeIdPBackendTest(OAuth2Test):
         }
 
         user_details = self.backend.get_user_details({
-            'id_token': 'dummy'
+            "userId": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
         })
 
         assert user_details == {

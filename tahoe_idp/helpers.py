@@ -92,12 +92,12 @@ def get_tenant_id():
     Get API_KEY for the FusionAuth API client.
     """
     fail_if_tahoe_idp_not_enabled()
-    idp_tenant_id = config_client_api.get_admin_value("IDP_TENANT_ID")
+    TAHOE_IDP_TENANT_ID = config_client_api.get_admin_value("TAHOE_IDP_TENANT_ID")
 
-    if not idp_tenant_id:
-        raise ImproperlyConfigured("Tahoe IdP `IDP_TENANT_ID` cannot be empty in `admin` Site Configuration.")
+    if not TAHOE_IDP_TENANT_ID:
+        raise ImproperlyConfigured("Tahoe IdP `TAHOE_IDP_TENANT_ID` cannot be empty in `admin` Site Configuration.")
 
-    return idp_tenant_id
+    return TAHOE_IDP_TENANT_ID
 
 
 def get_api_key():
@@ -145,46 +145,7 @@ def get_api_client():
     return client
 
 
-def get_jwt_payload(client_id, id_token):
-    """
-    Verifies and returns a JWT token payload from the response. A normal returned
-    payload looks like the following:
-        {
-            'iss': N/A,
-            'name': 'Ahmed Jazzar',
-            'email_verified': False,
-            'picture': 'https://s.gravatar.com/avatar/abcd.png',
-            'exp': 1633164125,
-            'sub': '659dc4c4-d5be-11ec-8b63-8ff1c112ea18',
-            'email': 'ahmed@appsembler.com',
-            'updated_at': '2021-10-01T22:42:54.841Z',
-            'iat': 1633128125,
-            'aud': '9TbUCXJ9F3u3Q5jyRpOWuKaybiCk3rEa'
-        }
-    """
-    issuer = "{}/".format(get_idp_base_url())
-    audience = client_id
-    jwks_response = requests.get("{}/.well-known/jwks.json".format(get_idp_base_url()))
-    jwks_response.raise_for_status()
-    jwks = jwks_response.json()
-
-    return jwt.decode(
-        token=id_token,
-        key=jwks,
-        algorithms=get_jwt_algorithms(),
-        audience=audience,
-        issuer=issuer,
-        options=get_id_jwt_decode_options(),
-    )
-
-
 def fusionauth_retrieve_user(user_uuid):
     idp_user_res = get_api_client().retrieve_user(user_uuid)
     idp_user_res.response.raise_for_status()
     return idp_user_res.response.json()["user"]
-
-
-def get_idp_user_from_id_token(client_id, id_token):
-    jwt_payload = get_jwt_payload(client_id, id_token)
-    idp_user_uuid = jwt_payload["sub"]
-    return fusionauth_retrieve_user(idp_user_uuid)

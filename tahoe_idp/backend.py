@@ -56,10 +56,8 @@ class TahoeIdpOAuth2(BaseOAuth2):
         """
         Fetches the user details from response's JWT and build the social_core JSON object.
         """
-        id_token = response["id_token"]
-        client_id = self.setting("KEY")  # CLIENT_ID
-
-        idp_user = helpers.get_idp_user_from_id_token(client_id, id_token)
+        tahoe_idp_uuid = response["userId"]
+        idp_user = helpers.fusionauth_retrieve_user(tahoe_idp_uuid)
 
         first_name = idp_user["firstName"]
         last_name = idp_user["lastName"]

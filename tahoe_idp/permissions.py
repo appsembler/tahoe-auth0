@@ -3,7 +3,7 @@ Permissions constants and utils for the tahoe-idp backend.
 """
 
 
-IDP_ORG_ADMIN_ROLE = 'Admin'
+IDP_ORG_ADMIN_ROLE = 'Administrator'
 IDP_STUDIO_ROLE = 'Staff'
 IDP_DEFAULT_ROLE = 'Learner'
 

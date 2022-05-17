@@ -34,6 +34,6 @@ def mock_tahoe_idp_api_settings(test_func):
     """
     admin_patch = override_site_config(
         config_type='admin',
-        IDP_TENANT_ID=MOCK_TENANT_ID,
+        TAHOE_IDP_TENANT_ID=MOCK_TENANT_ID,
     )
     return admin_patch(test_func)
