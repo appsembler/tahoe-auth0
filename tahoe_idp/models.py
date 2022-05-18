@@ -7,7 +7,6 @@ from django.http import HttpRequest
 from django.urls import reverse
 from django.utils import timezone
 from tahoe_idp import magiclink_settings
-from tahoe_idp.magiclink_utils import get_client_ip
 
 User = get_user_model()
 
@@ -23,8 +22,6 @@ class MagicLink(models.Model):
     redirect_url = models.TextField()
     disabled = models.BooleanField(default=False)
     times_used = models.IntegerField(default=0)
-    cookie_value = models.TextField(blank=True)
-    ip_address = models.GenericIPAddressField(null=True)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -68,22 +65,6 @@ class MagicLink(models.Model):
         if timezone.now() > self.expiry:
             self.disable()
             raise MagicLinkError('Magic link has expired')
-
-        if magiclink_settings.REQUIRE_SAME_IP:
-            client_ip = get_client_ip(request)
-            if client_ip and magiclink_settings.ANONYMIZE_IP:
-                client_ip = client_ip[:client_ip.rfind('.')+1] + '0'
-            if self.ip_address != client_ip:
-                self.disable()
-                raise MagicLinkError('IP address is different from the IP '
-                                     'address used to request the magic link')
-
-        if magiclink_settings.REQUIRE_SAME_BROWSER:
-            cookie_name = 'magiclink{pk}'.format(pk=self.pk)
-            if self.cookie_value != request.COOKIES.get(cookie_name):
-                self.disable()
-                raise MagicLinkError('Browser is different from the browser '
-                                     'used to request the magic link')
 
         if self.times_used >= magiclink_settings.TOKEN_USES:
             self.disable()

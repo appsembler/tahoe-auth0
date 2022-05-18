@@ -54,18 +54,6 @@ VERIFY_INCLUDE_USERNAME = getattr(settings, 'MAGICLINK_VERIFY_INCLUDE_USERNAME',
 if not isinstance(VERIFY_INCLUDE_USERNAME, bool):
     raise ImproperlyConfigured('"MAGICLINK_VERIFY_INCLUDE_USERNAME" must be a boolean')
 
-REQUIRE_SAME_BROWSER = getattr(settings, 'MAGICLINK_REQUIRE_SAME_BROWSER', True)
-if not isinstance(REQUIRE_SAME_BROWSER, bool):
-    raise ImproperlyConfigured('"MAGICLINK_REQUIRE_SAME_BROWSER" must be a boolean')
-
-REQUIRE_SAME_IP = getattr(settings, 'MAGICLINK_REQUIRE_SAME_IP', True)
-if not isinstance(REQUIRE_SAME_IP, bool):
-    raise ImproperlyConfigured('"MAGICLINK_REQUIRE_SAME_IP" must be a boolean')
-
-ANONYMIZE_IP = getattr(settings, 'MAGICLINK_ANONYMIZE_IP', True)
-if not isinstance(ANONYMIZE_IP, bool):
-    raise ImproperlyConfigured('"MAGICLINK_ANONYMIZE_IP" must be a boolean')
-
 ONE_TOKEN_PER_USER = getattr(settings, 'MAGICLINK_ONE_TOKEN_PER_USER', True)
 if not isinstance(ONE_TOKEN_PER_USER, bool):
     raise ImproperlyConfigured('"MAGICLINK_ONE_TOKEN_PER_USER" must be a boolean')

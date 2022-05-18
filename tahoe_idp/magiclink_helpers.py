@@ -1,12 +1,11 @@
 from datetime import timedelta
-from uuid import uuid4
 
 from django.conf import settings as djsettings
 from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from tahoe_idp import magiclink_settings as settings
-from tahoe_idp.magiclink_utils import get_client_ip, get_url_path
+from tahoe_idp.magiclink_utils import get_url_path
 from tahoe_idp.models import MagicLink, MagicLinkError
 
 
@@ -27,19 +26,11 @@ def create_magiclink(
     if not redirect_url:
         redirect_url = get_url_path(djsettings.LOGIN_REDIRECT_URL)
 
-    client_ip = None
-    if settings.REQUIRE_SAME_IP:
-        client_ip = get_client_ip(request)
-        if client_ip and settings.ANONYMIZE_IP:
-            client_ip = client_ip[:client_ip.rfind('.')+1] + '0'
-
     expiry = timezone.now() + timedelta(seconds=settings.AUTH_TIMEOUT)
     magic_link = MagicLink.objects.create(
         username=username,
         token=get_random_string(length=settings.TOKEN_LENGTH),
         expiry=expiry,
         redirect_url=redirect_url,
-        cookie_value=str(uuid4()),
-        ip_address=client_ip,
     )
     return magic_link

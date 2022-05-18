@@ -77,7 +77,6 @@ def test_generate_url_custom_verify(settings, magic_link):  # NOQA: F811
 def test_validate(user, magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
-    request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = ml.cookie_value
     ml_user = ml.validate(request=request, username=user.username)
     assert ml_user == user
 
@@ -87,7 +86,6 @@ def test_validate_wrong_username(user, magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
     username = 'fake_username'
-    request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = ml.cookie_value
     with pytest.raises(MagicLinkError) as error:
         ml.validate(request=request, username=username)
 
@@ -98,7 +96,6 @@ def test_validate_wrong_username(user, magic_link):  # NOQA: F811
 def test_validate_expired(user, magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
-    request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = ml.cookie_value
     ml.expiry = timezone.now() - timedelta(seconds=1)
     ml.save()
 
@@ -113,44 +110,9 @@ def test_validate_expired(user, magic_link):  # NOQA: F811
 
 
 @pytest.mark.django_db
-def test_validate_wrong_ip(user, magic_link):  # NOQA: F811
-    request = HttpRequest()
-    ml = magic_link(request)
-    request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = ml.cookie_value
-    ml.ip_address = '255.255.255.255'
-    ml.save()
-    with pytest.raises(MagicLinkError) as error:
-        ml.validate(request=request, username=user.username)
-
-    error.match('IP address is different from the IP address used to request '
-                'the magic link')
-
-    ml = MagicLink.objects.get(token=ml.token)
-    assert ml.times_used == 1
-    assert ml.disabled is True
-
-
-@pytest.mark.django_db
-def test_validate_different_browser(user, magic_link):  # NOQA: F811
-    request = HttpRequest()
-    ml = magic_link(request)
-    request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = 'bad_value'
-    with pytest.raises(MagicLinkError) as error:
-        ml.validate(request=request, username=user.username)
-
-    error.match('Browser is different from the browser used to request the '
-                'magic link')
-
-    ml = MagicLink.objects.get(token=ml.token)
-    assert ml.times_used == 1
-    assert ml.disabled is True
-
-
-@pytest.mark.django_db
 def test_validate_used_times(user, magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
-    request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = ml.cookie_value
     ml.times_used = settings.TOKEN_USES
     ml.save()
     with pytest.raises(MagicLinkError) as error:
@@ -171,7 +133,6 @@ def test_validate_superuser(settings, user, magic_link):  # NOQA: F811
 
     request = HttpRequest()
     ml = magic_link(request)
-    request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = ml.cookie_value
     user.is_superuser = True
     user.save()
     with pytest.raises(MagicLinkError) as error:
@@ -192,7 +153,6 @@ def test_validate_staff(settings, user, magic_link):  # NOQA: F811
 
     request = HttpRequest()
     ml = magic_link(request)
-    request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = ml.cookie_value
     user.is_staff = True
     user.save()
     with pytest.raises(MagicLinkError) as error:

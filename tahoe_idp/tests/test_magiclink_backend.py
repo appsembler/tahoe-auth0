@@ -21,7 +21,6 @@ def test_auth_backend_get_user_do_not_exist(user):  # NOQA: F811
 def test_auth_backend(user, magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
-    request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = ml.cookie_value
     user = MagicLinkBackend().authenticate(
         request=request, token=ml.token, username=user.username
     )
@@ -44,7 +43,6 @@ def test_auth_backend_no_token(user, magic_link):  # NOQA: F811
 def test_auth_backend_disabled_token(user, magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
-    request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = ml.cookie_value
     ml.disabled = True
     ml.save()
     user = MagicLinkBackend().authenticate(
@@ -57,7 +55,6 @@ def test_auth_backend_disabled_token(user, magic_link):  # NOQA: F811
 def test_auth_backend_no_email(user, magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
-    request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = ml.cookie_value
     user = MagicLinkBackend().authenticate(request=request, token=ml.token)
     assert user is None
 
@@ -66,7 +63,6 @@ def test_auth_backend_no_email(user, magic_link):  # NOQA: F811
 def test_auth_backend_invalid(user, magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
-    request.COOKIES['magiclink{pk}'.format(pk=ml.pk)] = ml.cookie_value
     user = MagicLinkBackend().authenticate(
         request=request, token=ml.token, username='fake_user'
     )

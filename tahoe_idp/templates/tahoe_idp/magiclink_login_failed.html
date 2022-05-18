@@ -21,12 +21,6 @@
     {% if ONE_TOKEN_PER_USER %}
     <li>You have requested another magic causing this magic link to become invalid</li>
     {% endif %}
-    {% if REQUIRE_SAME_BROWSER %}
-    <li>You are using a different browser to when you requested the login link</li>
-    {% endif %}
-    {% if REQUIRE_SAME_IP %}
-    <li>You are trying to login from a different location or machine that you requested the login link from</li>
-    {% endif %}
     {% if not ALLOW_SUPERUSER_LOGIN or not ALLOW_STAFF_LOGIN %}
     <li>You are a superuser or staff user</li>
     {% endif %}

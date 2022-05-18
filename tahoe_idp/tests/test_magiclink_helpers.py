@@ -1,5 +1,4 @@
 from datetime import timedelta
-from importlib import reload
 
 import pytest
 from unittest.mock import patch
@@ -50,33 +49,6 @@ def test_create_magiclink(settings):
     assert len(magic_link.token) == mlsettings.TOKEN_LENGTH
     assert magic_link.expiry == expiry
     assert magic_link.redirect_url == reverse(settings.LOGIN_REDIRECT_URL)
-    assert len(magic_link.cookie_value) == 36
-    assert magic_link.ip_address == '127.0.0.0'  # Anonymize IP by default
-
-
-@pytest.mark.django_db
-def test_create_magiclink_require_same_ip_off_no_ip(settings):
-    settings.MAGICLINK_REQUIRE_SAME_IP = False
-    from tahoe_idp import magiclink_settings as mlsettings
-    reload(mlsettings)
-
-    request = HttpRequest()
-    request.META['REMOTE_ADDR'] = '127.0.0.1'
-    magic_link = create_magiclink('test_user', request)
-    assert magic_link.ip_address is None
-
-
-@pytest.mark.django_db
-def test_create_magiclink_none_anonymized_ip(settings):
-    settings.MAGICLINK_ANONYMIZE_IP = False
-    from tahoe_idp import magiclink_settings as mlsettings
-    reload(mlsettings)
-
-    request = HttpRequest()
-    ip_address = '127.0.0.1'
-    request.META['REMOTE_ADDR'] = ip_address
-    magic_link = create_magiclink('test_user', request)
-    assert magic_link.ip_address == ip_address
 
 
 @pytest.mark.django_db

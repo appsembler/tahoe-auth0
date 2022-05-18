@@ -52,11 +52,6 @@ class LoginVerify(TemplateView):
 
         response = self.login_complete_action()
 
-        if settings.REQUIRE_SAME_BROWSER:
-            magiclink = MagicLink.objects.get(token=token)
-            cookie_name = 'magiclink{pk}'.format(pk=magiclink.pk)
-            response.delete_cookie(cookie_name, magiclink.cookie_value)
-
         return response
 
     def login_complete_action(self) -> HttpResponse:

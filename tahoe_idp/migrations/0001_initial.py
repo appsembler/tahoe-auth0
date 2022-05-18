@@ -21,8 +21,6 @@ class Migration(migrations.Migration):
                 ('redirect_url', models.TextField()),
                 ('disabled', models.BooleanField(default=False)),
                 ('times_used', models.IntegerField(default=0)),
-                ('cookie_value', models.TextField(blank=True)),
-                ('ip_address', models.GenericIPAddressField(null=True)),
                 ('created', models.DateTimeField(auto_now_add=True)),
             ],
         ),
