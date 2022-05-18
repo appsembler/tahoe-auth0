@@ -2,6 +2,7 @@ from datetime import timedelta
 from importlib import reload
 
 import pytest
+from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -30,15 +31,21 @@ class CustomUserName(CustomUserEmailOnly):
     name = models.TextField()
 
 
-@pytest.mark.django_db
-def test_create_magiclink(settings, freezer):
-    freezer.move_to('2000-01-01T00:00:00')
+def patch_current_time(datetime_string):
+    if len(datetime_string) == 10:
+        datetime_string += ' 00:00:00'
+    dt = timezone.make_aware(timezone.datetime.strptime(datetime_string, '%Y-%m-%dT%H:%M:%S'))
+    return patch('django.utils.timezone.now', return_value=dt)
 
-    username = 'test_user'
-    expiry = timezone.now() + timedelta(seconds=mlsettings.AUTH_TIMEOUT)
-    request = HttpRequest()
-    request.META['REMOTE_ADDR'] = '127.0.0.1'
-    magic_link = create_magiclink(username, request)
+
+@pytest.mark.django_db
+def test_create_magiclink(settings):
+    with patch_current_time('2000-01-01T00:00:00'):
+        username = 'test_user'
+        expiry = timezone.now() + timedelta(seconds=mlsettings.AUTH_TIMEOUT)
+        request = HttpRequest()
+        request.META['REMOTE_ADDR'] = '127.0.0.1'
+        magic_link = create_magiclink(username, request)
     assert magic_link.username == username
     assert len(magic_link.token) == mlsettings.TOKEN_LENGTH
     assert magic_link.expiry == expiry
@@ -83,15 +90,16 @@ def test_create_magiclink_redirect_url():
 
 
 @pytest.mark.django_db
-def test_create_magiclink_one_token_per_user(freezer):
+def test_create_magiclink_one_token_per_user():
     username = 'test_user'
     request = HttpRequest()
-    freezer.move_to('2000-01-01T00:00:00')
-    magic_link = create_magiclink(username, request)
+
+    with patch_current_time('2000-01-01T00:00:00'):
+        magic_link = create_magiclink(username, request)
     assert magic_link.disabled is False
 
-    freezer.move_to('2000-01-01T00:00:31')
-    create_magiclink(username, request)
+    with patch_current_time('2000-01-01T00:00:31'):
+        create_magiclink(username, request)
 
     magic_link = MagicLink.objects.get(token=magic_link.token)
     assert magic_link.disabled is True

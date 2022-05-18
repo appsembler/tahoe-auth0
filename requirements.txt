@@ -26,4 +26,4 @@ pytest-cov
 unittest2
 ddt
 pytest-mock
-pytest-freezegun
+
