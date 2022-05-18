@@ -1,3 +1,4 @@
+import pytest
 from unittest.mock import patch
 
 from ddt import data, ddt, unpack
@@ -7,92 +8,68 @@ from django.test import TestCase, override_settings
 from site_config_client.openedx.test_helpers import override_site_config
 
 from tahoe_idp.helpers import (
-    build_auth0_query,
     fail_if_tahoe_idp_not_enabled,
-    get_idp_domain,
-    get_client_info,
+    fusionauth_retrieve_user,
+    get_idp_base_url,
+    get_required_setting,
+    get_tenant_id,
     is_tahoe_idp_enabled,
 )
 
 
-class TestDomain(TestCase):
+class TestBaseURL(TestCase):
     @override_settings(TAHOE_IDP_CONFIGS={})
     @override_site_config("admin", ENABLE_TAHOE_IDP=True)
-    def test_no_domain(self):
+    def test_no_base_url(self):
         with self.assertRaises(ImproperlyConfigured):
-            get_idp_domain()
+            get_idp_base_url()
 
-    @override_settings(TAHOE_IDP_CONFIGS={"DOMAIN": "example.auth0.com"})
+    @override_settings(TAHOE_IDP_CONFIGS={"BASE_URL": "http://fa:9100"})
     @override_site_config("admin", ENABLE_TAHOE_IDP=True)
-    def test_with_domain(self):
-        actual_domain = get_idp_domain()
-        self.assertEqual(actual_domain, "example.auth0.com")
+    def test_with_base_url(self):
+        base_url = get_idp_base_url()
+        self.assertEqual(base_url, "http://fa:9100")
+
+
+@override_settings(TAHOE_IDP_CONFIGS={"BASE_URL": "http://fa:9100"})
+@override_site_config("admin", ENABLE_TAHOE_IDP=True)
+def test_required_setting_not_available():
+    with pytest.raises(ImproperlyConfigured, match='`API_KEY` cannot be empty'):
+        get_required_setting("API_KEY")
+
+
+@override_settings(TAHOE_IDP_CONFIGS={"BASE_URL": "http://fa:9100"})
+@override_site_config("admin", ENABLE_TAHOE_IDP=True)
+def test_missing_required_tenant_id():
+    with pytest.raises(ImproperlyConfigured, match='`TAHOE_IDP_TENANT_ID` cannot be empty'):
+        get_tenant_id()
+
+
+@override_settings(TAHOE_IDP_CONFIGS={"BASE_URL": "http://fa:9100", "API_KEY": "testkey"})
+@override_site_config("admin", ENABLE_TAHOE_IDP=True, TAHOE_IDP_TENANT_ID="tenant-xyz")
+def test_fusionauth_retrieve_user(requests_mock):
+    requests_mock.get(
+        "/api/user/855760ec-d5bc-11ec-9f0a-c3fd7676521c",
+        headers={
+            'content-type': 'application/json',
+        },
+        status_code=200,
+        json={
+            "user": {
+                "id": "855760ec-d5bc-11ec-9f0a-c3fd7676521c",
+                "username": "ahmedjazzar",
+            },
+        },
+    )
+    user = fusionauth_retrieve_user("855760ec-d5bc-11ec-9f0a-c3fd7676521c")
+    assert user == {
+        "id": "855760ec-d5bc-11ec-9f0a-c3fd7676521c",
+        "username": "ahmedjazzar",
+    }
 
 
 @ddt
-class TestClientInfo(TestCase):
-    @data(
-        {"API_CLIENT_ID": "client-id"},
-        {"API_CLIENT_SECRET": "client-secret"},
-    )
-    def test_missing_info(self, settings):
-        message = (
-            "Both `API_CLIENT_ID` and `API_CLIENT_SECRET` must be "
-            "present in your `TAHOE_IDP_CONFIGS`"
-        )
-
-        with override_settings(TAHOE_IDP_CONFIGS=settings), override_site_config("admin", ENABLE_TAHOE_IDP=True):
-            with self.assertRaisesMessage(ImproperlyConfigured, message):
-                get_client_info()
-
-    @override_settings(
-        TAHOE_IDP_CONFIGS={"API_CLIENT_ID": "cid", "API_CLIENT_SECRET": "secret"}
-    )
-    @override_site_config("admin", ENABLE_TAHOE_IDP=True)
-    def test_correct_configuration(self):
-        client_id, client_secret = get_client_info()
-        self.assertEqual(client_id, "cid")
-        self.assertEqual(client_secret, "secret")
-
-
-class TestBuildAuth0Query(TestCase):
-    def test_no_kwargs(self):
-        query = build_auth0_query()
-        self.assertEqual(query, "")
-
-    def test_empty_kwargs(self):
-        query = build_auth0_query(**{})
-        self.assertEqual(query, "")
-
-    def test_one_arg(self):
-        kwargs = {
-            "a": 1,
-        }
-        query = build_auth0_query(**kwargs)
-
-        # A url-encoded value of a:"1"
-        self.assertEqual(query, "a%3A%221%22")
-
-    def test_multiple_args(self):
-        kwargs = {
-            "a": 1,
-            "ab.cd": "some value",
-        }
-        query = build_auth0_query(**kwargs)
-
-        # A url-encoded value of a:"1"&ab.cd:"some value"
-        # Order doesn't matter here.
-        self.assertIn(
-            query,
-            [
-                "a%3A%221%22&ab.cd%3A%22some+value%22",
-                "ab.cd%3A%22some+value%22&a%3A%221%22",
-            ],
-        )
-
-
-@ddt
-class TestIsAuth0Enabled(TestCase):
+class TestIsTahoeIdPEnabled(TestCase):
     @unpack
     @data(
         {"configuration_flag": None, "feature_flag": True, "is_enabled": True},
@@ -132,7 +109,7 @@ class TestIsAuth0Enabled(TestCase):
             is_tahoe_idp_enabled()
 
     @override_site_config("admin", ENABLE_TAHOE_IDP="True")
-    def test_auth0_settings_enabled_not_boolean(self):
+    def test_idp_settings_enabled_not_boolean(self):
         message = "`ENABLE_TAHOE_IDP` must be of boolean type"
         with self.assertRaisesMessage(ImproperlyConfigured, message):
             is_tahoe_idp_enabled()
@@ -145,11 +122,11 @@ class TestIsAuth0Enabled(TestCase):
         },
     )
     @override_site_config("admin", ENABLE_TAHOE_IDP=True)
-    def test_auth0_enabled(self):
+    def test_tahoe_idp_enabled(self):
         self.assertEqual(True, is_tahoe_idp_enabled())
 
 
-class TestAuth0EnabledDecorator(TestCase):
+class TestTahoeIdPEnabledHelper(TestCase):
     @patch("tahoe_idp.helpers.is_tahoe_idp_enabled", return_value=False)
     def test_not_enabled(self, mock_is_tahoe_idp_enabled):
         with self.assertRaises(EnvironmentError):

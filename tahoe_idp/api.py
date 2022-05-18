@@ -14,21 +14,24 @@ External Python API helpers goes here.
 
 from social_django.models import UserSocialAuth
 
-from .api_client import Auth0ApiClient
 from .constants import BACKEND_NAME
+from . import helpers
 
 
 def request_password_reset(email):
     """
     Start password reset email for Username|Password Database Connection users.
     """
-    auth0_api_client = Auth0ApiClient()
-    return auth0_api_client.change_password_via_reset_for_db_connection(email)
+    api_client = helpers.get_api_client()
+    client_response = api_client.forgot_password({'loginId': email})
+    http_response = client_response.response
+    http_response.raise_for_status()
+    return http_response
 
 
 def get_tahoe_idp_id_by_user(user):
     """
-    Get auth0 unique ID for a Django user.
+    Get Tahoe IdP unique ID for a Django user.
 
     This helper uses the `social_django` app.
     """
@@ -46,22 +49,32 @@ def get_tahoe_idp_id_by_user(user):
 
 def update_user(user, properties):
     """
-    Update Auth0 user properties via PATCH /api/v2/users/.
+    Update user properties via PATCH /api/user/{userId}.
 
-    See: https://auth0.com/docs/api/management/v2#!/Users/patch_users_by_id
+    See: https://fusionauth.io/docs/v1/tech/apis/users#update-a-user
     """
-    auth0_api_client = Auth0ApiClient()
-    auth0_user_id = get_tahoe_idp_id_by_user(user)
-    return auth0_api_client.update_user(auth0_user_id, properties)
+    api_client = helpers.get_api_client()
+    idp_user_id = get_tahoe_idp_id_by_user(user)
+    client_response = api_client.patch_user(
+        user_id=idp_user_id,
+        request=properties,
+    )
+    http_response = client_response.response
+    http_response.raise_for_status()
+    return http_response
 
 
 def update_user_email(user, email, set_email_as_verified=False):
     """
-    Update user email via PATCH /api/v2/users/.
+    Update user email via PATCH /api/user/{userId}.
     """
-    properties = {'email': email}
+    properties = {
+        'user': {
+            'email': email,
+        },
+    }
 
     if set_email_as_verified:
-        properties['email_verified'] = True
+        properties['skipVerification'] = True
 
-    update_user(user, properties=properties)
+    return update_user(user, properties=properties)

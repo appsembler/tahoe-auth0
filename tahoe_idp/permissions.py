@@ -3,9 +3,12 @@ Permissions constants and utils for the tahoe-idp backend.
 """
 
 
-IDP_ORG_ADMIN_ROLE = 'Admin'
+IDP_ORG_ADMIN_ROLE = 'Administrator'
 IDP_STUDIO_ROLE = 'Staff'
 IDP_DEFAULT_ROLE = 'Learner'
+
+
+METADATE_ROLE_FIELD = 'platform_role'
 
 
 def is_organization_admin(role):
@@ -22,8 +25,8 @@ def is_organization_staff(role):
     return role == IDP_STUDIO_ROLE or is_organization_admin(role)
 
 
-def get_role_with_default(app_metadata):
+def get_role_with_default(user_data):
     """
-    Helper to get role from `app_metadata` and default to Learner.
+    Helper to get role from `user.data.platform_role` and default to Learner.
     """
-    return app_metadata.get('role', IDP_DEFAULT_ROLE)
+    return user_data.get(METADATE_ROLE_FIELD, IDP_DEFAULT_ROLE)

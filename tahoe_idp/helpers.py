@@ -1,11 +1,15 @@
+"""
+Helpers
+"""
+
 import logging
-import urllib.parse
+
+from fusionauth.fusionauth_client import FusionAuthClient
+from site_config_client.openedx import api as config_client_api
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-
-from site_config_client.openedx import api as config_client_api
 
 logger = logging.getLogger(__name__)
 
@@ -60,48 +64,86 @@ def fail_if_tahoe_idp_not_enabled():
         raise EnvironmentError("Tahoe IdP is not enabled in your project")
 
 
-def get_idp_domain():
+def get_required_setting(setting_name):
     """
-    A property method used to fetch IdP domain from Django's settings variable.
+    Get a required Tahoe Identity Provider setting from TAHOE_IDP_CONFIGS.
 
     We will raise an ImproperlyConfigured error if we couldn't find the setting.
     """
     fail_if_tahoe_idp_not_enabled()
-    domain = settings.TAHOE_IDP_CONFIGS.get("DOMAIN")
+    setting_value = settings.TAHOE_IDP_CONFIGS.get(setting_name)
+    if not setting_value:
+        raise ImproperlyConfigured("Tahoe IdP `{}` cannot be empty".format(setting_name))
 
-    if not domain:
-        raise ImproperlyConfigured("Tahoe IdP `DOMAIN` cannot be empty")
-
-    return domain
+    return setting_value
 
 
-def get_client_info():
+def get_idp_base_url():
     """
-    A helper method responsible for fetching the access token and the client secret
-    from Django settings.FEATURES.
-    If either value does not exist, we will raise an ImproperlyConfigured error.
+    Get IdP base_url from Django's settings variable.
+    """
+    return get_required_setting('BASE_URL')
+
+
+def get_tenant_id():
+    """
+    Get API_KEY for the FusionAuth API client.
     """
     fail_if_tahoe_idp_not_enabled()
-    client_id = settings.TAHOE_IDP_CONFIGS.get("API_CLIENT_ID")
-    client_secret = settings.TAHOE_IDP_CONFIGS.get("API_CLIENT_SECRET")
+    TAHOE_IDP_TENANT_ID = config_client_api.get_admin_value("TAHOE_IDP_TENANT_ID")
 
-    if not client_id or not client_secret:
-        raise ImproperlyConfigured(
-            "Both `API_CLIENT_ID` and `API_CLIENT_SECRET` must be present "
-            "in your `TAHOE_IDP_CONFIGS`"
-        )
+    if not TAHOE_IDP_TENANT_ID:
+        raise ImproperlyConfigured("Tahoe IdP `TAHOE_IDP_TENANT_ID` cannot be empty in `admin` Site Configuration.")
 
-    return client_id, client_secret
+    return TAHOE_IDP_TENANT_ID
 
 
-def build_auth0_query(**kwargs):
+def get_api_key():
     """
-    Responsible for building a querystring used in Tahoe IdP GET APIs.
-
-    This is Auth0-specific.
+    Get API_KEY for the FusionAuth API client.
     """
-    args = [
-        urllib.parse.quote_plus('{}:"{}"'.format(key, value))
-        for key, value in kwargs.items()
-    ]
-    return "&".join(args)
+    return get_required_setting("API_KEY")
+
+
+def get_id_jwt_decode_options():
+    """
+    Get IdP jwt decode configs from Django's settings variable.
+    """
+    fail_if_tahoe_idp_not_enabled()
+    return settings.TAHOE_IDP_CONFIGS.get("JWT_OPTIONS", {})
+
+
+def get_jwt_algorithms():
+    """
+    Get
+
+    See: https://fusionauth.io/learn/expert-advice/tokens/anatomy-of-jwt
+    """
+    fail_if_tahoe_idp_not_enabled()
+    return settings.TAHOE_IDP_CONFIGS.get("JWT_ALGORITHMS", [
+        "HS256",
+        "RS256",
+        "RS384",
+        "RS512",
+        "ES256",
+        "ES384",
+        "ES512",
+    ])
+
+
+def get_api_client():
+    """
+    Get a configured Rest API client for the Identity Provider.
+    """
+    client = FusionAuthClient(
+        api_key=get_api_key(),
+        base_url=get_idp_base_url(),
+    )
+    client.set_tenant_id(get_tenant_id())
+    return client
+
+
+def fusionauth_retrieve_user(user_uuid):
+    idp_user_res = get_api_client().retrieve_user(user_uuid)
+    idp_user_res.response.raise_for_status()
+    return idp_user_res.response.json()["user"]

@@ -129,8 +129,7 @@ STATIC_URL = "/static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-# Check https://auth0.com/docs/configure/apis/scopes for more info
-SOCIAL_AUTH0_IDP_SCOPE = ["openid", "profile", "email"]
+SOCIAL_TAHOE_IDP_SCOPE = ["openid", "offline_access"]
 
 AUTHENTICATION_BACKENDS = {
     "tahoe_idp.backend.TahoeIdpOAuth2",
