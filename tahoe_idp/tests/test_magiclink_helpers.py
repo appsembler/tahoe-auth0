@@ -68,13 +68,13 @@ def test_create_magiclink_one_token_per_user():
 
     with patch_current_time('2000-01-01T00:00:00'):
         magic_link = create_magiclink(username, request)
-    assert magic_link.disabled is False
+    assert magic_link.used is False
 
     with patch_current_time('2000-01-01T00:00:31'):
         create_magiclink(username, request)
 
     magic_link = MagicLink.objects.get(token=magic_link.token)
-    assert magic_link.disabled is True
+    assert magic_link.used is True
     assert magic_link.username == username
 
 

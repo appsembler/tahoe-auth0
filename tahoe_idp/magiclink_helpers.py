@@ -15,13 +15,13 @@ def create_magiclink(
     redirect_url: str = '',
 ) -> MagicLink:
     limit = timezone.now() - timedelta(seconds=settings.LOGIN_REQUEST_TIME_LIMIT)  # NOQA: E501
-    over_limit = MagicLink.objects.filter(username=username, created__gte=limit)
+    over_limit = MagicLink.objects.filter(username=username, created_on__gte=limit)
     if over_limit:
         raise MagicLinkError('Too many magic login requests')
 
     if settings.ONE_TOKEN_PER_USER:
-        magic_links = MagicLink.objects.filter(username=username, disabled=False)
-        magic_links.update(disabled=True)
+        magic_links = MagicLink.objects.filter(username=username, used=False)
+        magic_links.update(used=True)
 
     if not redirect_url:
         redirect_url = get_url_path(djsettings.LOGIN_REDIRECT_URL)
@@ -32,6 +32,6 @@ def create_magiclink(
         token=get_random_string(length=settings.TOKEN_LENGTH),
         expiry=expiry,
         redirect_url=redirect_url,
-        created=timezone.now(),
+        created_on=timezone.now(),
     )
     return magic_link

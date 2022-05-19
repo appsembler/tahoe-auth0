@@ -21,13 +21,13 @@ def test_auth_backend_get_user_do_not_exist(user):  # NOQA: F811
 def test_auth_backend(user, magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
+    assert ml.used is False
     user = MagicLinkBackend().authenticate(
         request=request, token=ml.token, username=user.username
     )
     assert user
     ml = MagicLink.objects.get(token=ml.token)
-    assert ml.times_used == 1
-    assert ml.disabled is True
+    assert ml.used is True
 
 
 @pytest.mark.django_db
@@ -40,10 +40,10 @@ def test_auth_backend_no_token(user, magic_link):  # NOQA: F811
 
 
 @pytest.mark.django_db
-def test_auth_backend_disabled_token(user, magic_link):  # NOQA: F811
+def test_auth_backend_used_token(user, magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
-    ml.disabled = True
+    ml.used = True
     ml.save()
     user = MagicLinkBackend().authenticate(
         request=request, token=ml.token, username=user.username

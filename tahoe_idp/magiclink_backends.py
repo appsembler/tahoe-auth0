@@ -30,25 +30,19 @@ class MagicLinkBackend:
         try:
             magiclink = MagicLink.objects.get(token=token)
         except MagicLink.DoesNotExist:
-            log.warning('MagicLink with token "{token}" not found'.format(token=token))
-            return
-
-        if magiclink.disabled:
-            log.warning('MagicLink "{pk}" is disabled'.format(pk=magiclink.pk))
+            log.debug('MagicLink with token "{token}" not found'.format(token=token))
             return
 
         try:
-            user = magiclink.validate(request, username)
+            user = magiclink.get_user_with_validate(request, username)
         except MagicLinkError as error:
-            log.warning(error)
+            log.debug(error)
             return
 
-        magiclink.used()
         log.info('{username} authenticated via MagicLink'.format(username=user.username))
+
         return user
 
-    def get_user(self, user_id):
-        try:
-            return User.objects.get(pk=user_id)
-        except User.DoesNotExist:
-            return
+    @staticmethod
+    def get_user(user_id):
+        return User.objects.filter(pk=user_id).first()

@@ -20,23 +20,11 @@ class MagicLink(models.Model):
     token = models.TextField()
     expiry = models.DateTimeField()
     redirect_url = models.TextField()
-    disabled = models.BooleanField(default=False)
-    times_used = models.IntegerField(default=0)
-    created = models.DateTimeField()
+    used = models.BooleanField(default=False)
+    created_on = models.DateTimeField()
 
     def __str__(self):
         return '{username} - {expiry}'.format(username=self.username, expiry=self.expiry)
-
-    def used(self) -> None:
-        self.times_used += 1
-        if self.times_used >= magiclink_settings.TOKEN_USES:
-            self.disabled = True
-        self.save()
-
-    def disable(self) -> None:
-        self.times_used += 1
-        self.disabled = True
-        self.save()
 
     def generate_url(self, request: HttpRequest) -> str:
         url_path = reverse(magiclink_settings.LOGIN_VERIFY_URL)
@@ -54,32 +42,34 @@ class MagicLink(models.Model):
         )
         return url
 
-    def validate(
+    def _validation_error(self, error_message):
+        self.used = True
+        self.save()
+        raise MagicLinkError(error_message)
+
+    def get_user_with_validate(
         self,
         request: HttpRequest,
         username: str = '',
     ) -> AbstractUser:
+        if self.used:
+            raise MagicLinkError('Magic link already used')
+
         if magiclink_settings.VERIFY_INCLUDE_USERNAME and self.username != username:
             raise MagicLinkError('username does not match')
 
         if timezone.now() > self.expiry:
-            self.disable()
-            raise MagicLinkError('Magic link has expired')
-
-        if self.times_used >= magiclink_settings.TOKEN_USES:
-            self.disable()
-            raise MagicLinkError('Magic link has been used too many times')
+            self._validation_error('Magic link has expired')
 
         user = User.objects.get(username=self.username)
 
         if not magiclink_settings.ALLOW_SUPERUSER_LOGIN and user.is_superuser:
-            self.disable()
-            raise MagicLinkError(
-                'You can not login to a super user account using a magic link')
+            self._validation_error('You can not login to a super user account using a magic link')
 
         if not magiclink_settings.ALLOW_STAFF_LOGIN and user.is_staff:
-            self.disable()
-            raise MagicLinkError(
-                'You can not login to a staff account using a magic link')
+            self._validation_error('You can not login to a staff account using a magic link')
+
+        self.used = True
+        self.save()
 
         return user

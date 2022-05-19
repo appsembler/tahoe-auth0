@@ -19,9 +19,8 @@ class Migration(migrations.Migration):
                 ('token', models.TextField()),
                 ('expiry', models.DateTimeField()),
                 ('redirect_url', models.TextField()),
-                ('disabled', models.BooleanField(default=False)),
-                ('times_used', models.IntegerField(default=0)),
-                ('created', models.DateTimeField()),
+                ('used', models.BooleanField(default=False)),
+                ('created_on', models.DateTimeField()),
             ],
         ),
     ]

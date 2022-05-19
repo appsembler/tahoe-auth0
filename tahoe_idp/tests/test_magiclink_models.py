@@ -8,7 +8,6 @@ from django.http import HttpRequest
 from django.urls import reverse
 from django.utils import timezone
 
-from tahoe_idp import magiclink_settings as settings
 from tahoe_idp.models import MagicLink, MagicLinkError
 
 from tahoe_idp.tests.magiclink_fixtures import magic_link, user  # NOQA: F401
@@ -77,8 +76,7 @@ def test_generate_url_custom_verify(settings, magic_link):  # NOQA: F811
 def test_validate(user, magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
-    ml_user = ml.validate(request=request, username=user.username)
-    assert ml_user == user
+    assert user == ml.get_user_with_validate(request=request, username=user.username)
 
 
 @pytest.mark.django_db
@@ -87,7 +85,7 @@ def test_validate_wrong_username(user, magic_link):  # NOQA: F811
     ml = magic_link(request)
     username = 'fake_username'
     with pytest.raises(MagicLinkError) as error:
-        ml.validate(request=request, username=username)
+        ml.get_user_with_validate(request=request, username=username)
 
     error.match('username does not match')
 
@@ -100,29 +98,24 @@ def test_validate_expired(user, magic_link):  # NOQA: F811
     ml.save()
 
     with pytest.raises(MagicLinkError) as error:
-        ml.validate(request=request, username=user.username)
+        ml.get_user_with_validate(request=request, username=user.username)
 
     error.match('Magic link has expired')
 
     ml = MagicLink.objects.get(token=ml.token)
-    assert ml.times_used == 1
-    assert ml.disabled is True
+    assert ml.used is True
 
 
 @pytest.mark.django_db
 def test_validate_used_times(user, magic_link):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
-    ml.times_used = settings.TOKEN_USES
+    ml.used = True
     ml.save()
     with pytest.raises(MagicLinkError) as error:
-        ml.validate(request=request, username=user.username)
+        ml.get_user_with_validate(request=request, username=user.username)
 
-    error.match('Magic link has been used too many times')
-
-    ml = MagicLink.objects.get(token=ml.token)
-    assert ml.times_used == settings.TOKEN_USES + 1
-    assert ml.disabled is True
+    error.match('Magic link already used')
 
 
 @pytest.mark.django_db
@@ -136,13 +129,12 @@ def test_validate_superuser(settings, user, magic_link):  # NOQA: F811
     user.is_superuser = True
     user.save()
     with pytest.raises(MagicLinkError) as error:
-        ml.validate(request=request, username=user.username)
+        ml.get_user_with_validate(request=request, username=user.username)
 
     error.match('You can not login to a super user account using a magic link')
 
     ml = MagicLink.objects.get(token=ml.token)
-    assert ml.times_used == 1
-    assert ml.disabled is True
+    assert ml.used is True
 
 
 @pytest.mark.django_db
@@ -156,10 +148,9 @@ def test_validate_staff(settings, user, magic_link):  # NOQA: F811
     user.is_staff = True
     user.save()
     with pytest.raises(MagicLinkError) as error:
-        ml.validate(request=request, username=user.username)
+        ml.get_user_with_validate(request=request, username=user.username)
 
     error.match('You can not login to a staff account using a magic link')
 
     ml = MagicLink.objects.get(token=ml.token)
-    assert ml.times_used == 1
-    assert ml.disabled is True
+    assert ml.used is True

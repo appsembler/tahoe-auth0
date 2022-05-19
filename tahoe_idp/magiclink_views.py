@@ -41,7 +41,7 @@ class LoginVerify(TemplateView):
                 return self.render_to_response(context)
 
             try:
-                magiclink.validate(request, username)
+                magiclink.get_user_with_validate(request, username)
             except MagicLinkError as error:
                 context['login_error'] = str(error)
 
