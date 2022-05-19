@@ -19,9 +19,8 @@ def create_magiclink(
     if over_limit:
         raise MagicLinkError('Too many magic login requests')
 
-    if settings.ONE_TOKEN_PER_USER:
-        magic_links = MagicLink.objects.filter(username=username, used=False)
-        magic_links.update(used=True)
+    # Only the last magic link is usable per user
+    MagicLink.objects.filter(username=username, used=False).update(used=True)
 
     if not redirect_url:
         redirect_url = get_url_path(djsettings.LOGIN_REDIRECT_URL)
