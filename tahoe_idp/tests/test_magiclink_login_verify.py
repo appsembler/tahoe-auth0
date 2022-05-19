@@ -50,27 +50,15 @@ def test_login_verify_with_redirect(client, magic_link):  # NOQA: F811
 
 
 @pytest.mark.django_db
-def test_login_verify_no_token_404(client, settings):
-    settings.MAGICLINK_LOGIN_FAILED_TEMPLATE_NAME = ''
-    from tahoe_idp import magiclink_settings as mlsettings
-    reload(mlsettings)
-
-    url = reverse('tahoe_idp:login_verify')
-    response = client.get(url)
-    assert response.status_code == 404
-
-
-@pytest.mark.django_db
 def test_login_verify_failed(client, settings):
-    settings.MAGICLINK_LOGIN_FAILED_TEMPLATE_NAME = 'tahoe_idp/magiclink_login_failed.html'  # NOQA: E501
     from tahoe_idp import magiclink_settings as mlsettings
     reload(mlsettings)
 
     url = reverse('tahoe_idp:login_verify')
     response = client.get(url)
-    assert response.status_code == 200
-    context = response.context_data
-    assert context['login_error'] == 'A magic link with that token could not be found'  # NOQA: E501
+    assert response.status_code == 500
+    content = response.content.decode('utf-8')
+    assert content == 'A magic link with that token could not be found'
 
 
 @pytest.mark.django_db

@@ -1,7 +1,7 @@
 import logging
 
 from django.contrib.auth import authenticate, get_user_model, login
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponseServerError
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
@@ -17,8 +17,6 @@ log = logging.getLogger(__name__)
 
 @method_decorator(never_cache, name='dispatch')
 class LoginVerify(TemplateView):
-    template_name = settings.LOGIN_FAILED_TEMPLATE_NAME
-
     def get(self, request, *args, **kwargs):
         token = request.GET.get('token')
         username = request.GET.get('username')
@@ -28,24 +26,15 @@ class LoginVerify(TemplateView):
                 redirect_url = get_url_path(settings.LOGIN_FAILED_REDIRECT)
                 return HttpResponseRedirect(redirect_url)
 
-            if not settings.LOGIN_FAILED_TEMPLATE_NAME:
-                raise Http404()
-
-            context = self.get_context_data(**kwargs)
-
             try:
                 magiclink = MagicLink.objects.get(token=token)
             except MagicLink.DoesNotExist:
-                error = 'A magic link with that token could not be found'
-                context['login_error'] = error
-                return self.render_to_response(context)
+                return HttpResponseServerError('A magic link with that token could not be found')
 
             try:
                 magiclink.get_user_with_validate(request, username)
             except MagicLinkError as error:
-                context['login_error'] = str(error)
-
-            return self.render_to_response(context)
+                return HttpResponseServerError(str(error))
 
         login(request, user)
         log.info('Login successful for {username}'.format(username=username))
@@ -54,7 +43,7 @@ class LoginVerify(TemplateView):
 
         return response
 
-    def login_complete_action(self) -> HttpResponse:
+    def login_complete_action(self) -> HttpResponseRedirect:
         token = self.request.GET.get('token')
         magiclink = MagicLink.objects.get(token=token)
         return HttpResponseRedirect(magiclink.redirect_url)

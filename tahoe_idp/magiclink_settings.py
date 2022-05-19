@@ -4,13 +4,6 @@ import warnings
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-LOGIN_FAILED_TEMPLATE_NAME = getattr(
-    settings,
-    'MAGICLINK_LOGIN_FAILED_TEMPLATE_NAME',
-    'tahoe_idp/magiclink_login_failed.html'
-)
-# If LOGIN_FAILED_REDIRECT has a value the user will be redirected to this
-# URL instead of being shown the LOGIN_FAILED_TEMPLATE
 LOGIN_FAILED_REDIRECT = getattr(settings, 'MAGICLINK_LOGIN_FAILED_REDIRECT', '')
 
 try:
