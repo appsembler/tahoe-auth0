@@ -22,7 +22,7 @@ class MagicLink(models.Model):
     redirect_url = models.TextField()
     disabled = models.BooleanField(default=False)
     times_used = models.IntegerField(default=0)
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField()
 
     def __str__(self):
         return '{username} - {expiry}'.format(username=self.username, expiry=self.expiry)

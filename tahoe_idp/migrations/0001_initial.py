@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('redirect_url', models.TextField()),
                 ('disabled', models.BooleanField(default=False)),
                 ('times_used', models.IntegerField(default=0)),
-                ('created', models.DateTimeField(auto_now_add=True)),
+                ('created', models.DateTimeField()),
             ],
         ),
     ]

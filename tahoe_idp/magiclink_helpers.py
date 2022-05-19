@@ -32,5 +32,6 @@ def create_magiclink(
         token=get_random_string(length=settings.TOKEN_LENGTH),
         expiry=expiry,
         redirect_url=redirect_url,
+        created=timezone.now(),
     )
     return magic_link
