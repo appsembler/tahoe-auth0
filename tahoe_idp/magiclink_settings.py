@@ -38,10 +38,6 @@ ALLOW_STAFF_LOGIN = getattr(settings, 'MAGICLINK_ALLOW_STAFF_LOGIN', True)
 if not isinstance(ALLOW_STAFF_LOGIN, bool):
     raise ImproperlyConfigured('"MAGICLINK_ALLOW_STAFF_LOGIN" must be a boolean')
 
-VERIFY_INCLUDE_USERNAME = getattr(settings, 'MAGICLINK_VERIFY_INCLUDE_USERNAME', True)
-if not isinstance(VERIFY_INCLUDE_USERNAME, bool):
-    raise ImproperlyConfigured('"MAGICLINK_VERIFY_INCLUDE_USERNAME" must be a boolean')
-
 ONE_TOKEN_PER_USER = getattr(settings, 'MAGICLINK_ONE_TOKEN_PER_USER', True)
 if not isinstance(ONE_TOKEN_PER_USER, bool):
     raise ImproperlyConfigured('"MAGICLINK_ONE_TOKEN_PER_USER" must be a boolean')

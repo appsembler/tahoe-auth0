@@ -29,9 +29,10 @@ class MagicLink(models.Model):
     def generate_url(self, request: HttpRequest) -> str:
         url_path = reverse(magiclink_settings.LOGIN_VERIFY_URL)
 
-        params = {'token': self.token}
-        if magiclink_settings.VERIFY_INCLUDE_USERNAME:
-            params['username'] = self.username
+        params = {
+            'token': self.token,
+            'username': self.username,
+        }
         query = urlencode(params)
 
         url_path = '{url_path}?{query}'.format(url_path=url_path, query=query)
@@ -55,7 +56,7 @@ class MagicLink(models.Model):
         if self.used:
             raise MagicLinkError('Magic link already used')
 
-        if magiclink_settings.VERIFY_INCLUDE_USERNAME and self.username != username:
+        if self.username != username:
             raise MagicLinkError('username does not match')
 
         if timezone.now() > self.expiry:
