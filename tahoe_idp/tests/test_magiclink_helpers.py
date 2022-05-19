@@ -42,7 +42,6 @@ def test_create_magiclink(settings):
         username = 'test_user'
         expiry = timezone.now() + timedelta(seconds=mlsettings.AUTH_TIMEOUT)
         request = HttpRequest()
-        request.META['REMOTE_ADDR'] = '127.0.0.1'
         magic_link = create_magiclink(username, request)
     assert magic_link.username == username
     assert len(magic_link.token) == mlsettings.TOKEN_LENGTH

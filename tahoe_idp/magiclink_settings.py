@@ -22,10 +22,6 @@ try:
 except ValueError:
     raise ImproperlyConfigured('"MAGICLINK_AUTH_TIMEOUT" must be an integer')
 
-EMAIL_IGNORE_CASE = getattr(settings, 'MAGICLINK_EMAIL_IGNORE_CASE', True)
-if not isinstance(EMAIL_IGNORE_CASE, bool):
-    raise ImproperlyConfigured('"MAGICLINK_EMAIL_IGNORE_CASE" must be a boolean')
-
 EMAIL_AS_USERNAME = getattr(settings, 'MAGICLINK_EMAIL_AS_USERNAME', True)
 if not isinstance(EMAIL_AS_USERNAME, bool):
     raise ImproperlyConfigured('"MAGICLINK_EMAIL_AS_USERNAME" must be a boolean')
