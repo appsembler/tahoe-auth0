@@ -59,19 +59,14 @@ class TahoeIdpOAuth2(BaseOAuth2):
         tahoe_idp_uuid = response["userId"]
         idp_user = helpers.fusionauth_retrieve_user(tahoe_idp_uuid)
 
-        first_name = idp_user["firstName"]
-        last_name = idp_user["lastName"]
-        fullname = "{first_name} {last_name}".format(first_name=first_name, last_name=last_name)
-
         user_data = idp_user.get("data", {})
         user_data_role = get_role_with_default(user_data)
+        username = idp_user.get("username", idp_user["id"])
 
         return {
-            "username": idp_user.get("username", idp_user["id"]),
+            "username": username,
             "email": idp_user["email"],
-            "fullname": fullname,
-            "first_name": first_name,
-            "last_name": last_name,
+            "fullname": idp_user.get("fullName", username),
             "tahoe_idp_uuid": idp_user["id"],
             "tahoe_idp_is_organization_admin": is_organization_admin(user_data_role),
             "tahoe_idp_is_organization_staff": is_organization_staff(user_data_role),

@@ -129,11 +129,9 @@ class TahoeIdPBackendTest(OAuth2Test):
     def test_get_user_details(self, mock_get_idp_user):
         mock_get_idp_user.return_value = {
             "email": "ahmed@appsembler.com",
-            "firstName": "Ahmed",
+            "fullName": "Ahmed Jazzar",
             "id": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
-            "lastName": "Jazzar",
             "tenantId": "aa4a50e3-0d57-d047-6618-0aea1efadf74",
-            "username": "ahmedjazzar",
             "data": {
                 "platform_role": "Staff",
             }
@@ -144,11 +142,9 @@ class TahoeIdPBackendTest(OAuth2Test):
         })
 
         assert user_details == {
-            "username": "ahmedjazzar",
+            "username": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",  # Username not provided, using UUID as username
             "email": "ahmed@appsembler.com",
             "fullname": "Ahmed Jazzar",
-            "first_name": "Ahmed",
-            "last_name": "Jazzar",
             "tahoe_idp_uuid": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
             "tahoe_idp_is_organization_admin": False,
             "tahoe_idp_is_organization_staff": True,
@@ -163,9 +159,7 @@ class TahoeIdPBackendTest(OAuth2Test):
         """
         mock_get_idp_user.return_value = {
           "email": "ahmed@appsembler.com",
-          "firstName": "Ahmed",
           "id": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
-          "lastName": "Jazzar",
           "tenantId": "aa4a50e3-0d57-d047-6618-0aea1efadf74",
           "username": "ahmedjazzar",
         }
@@ -177,9 +171,7 @@ class TahoeIdPBackendTest(OAuth2Test):
         assert user_details == {
             "username": "ahmedjazzar",
             "email": "ahmed@appsembler.com",
-            "fullname": "Ahmed Jazzar",
-            "first_name": "Ahmed",
-            "last_name": "Jazzar",
+            "fullname": "ahmedjazzar",  # fullNAme not provided, using `username` as full name
             "tahoe_idp_uuid": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
             "tahoe_idp_is_organization_admin": False,
             "tahoe_idp_is_organization_staff": False,
