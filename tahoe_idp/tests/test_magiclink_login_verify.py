@@ -25,7 +25,7 @@ def test_login_verify(client, settings, magic_link):  # NOQA: F811
 
     response = client.get(url)
     assert response.status_code == 302
-    assert response.url == reverse(settings.LOGIN_REDIRECT_URL)
+    assert response.url == settings.LOGIN_REDIRECT_URL
 
     needs_login_url = reverse('needs_login')
     needs_login_response = client.get(needs_login_url)

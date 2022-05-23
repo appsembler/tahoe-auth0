@@ -139,7 +139,6 @@ AUTHENTICATION_BACKENDS = {
 }
 
 LOGIN_URL = "/login/tahoe-idp"
-LOGIN_REDIRECT_URL = "needs_login"
 
 FEATURES = {"ENABLE_TAHOE_IDP": True}
 

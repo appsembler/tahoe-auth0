@@ -6,7 +6,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.http import HttpRequest
-from django.urls import reverse
 from django.utils import timezone
 
 from tahoe_idp import magiclink_settings as mlsettings
@@ -48,7 +47,7 @@ def test_create_magiclink(settings):
     assert magic_link.username == username
     assert len(magic_link.token) == mlsettings.TOKEN_LENGTH
     assert magic_link.expiry == expiry
-    assert magic_link.redirect_url == reverse(settings.LOGIN_REDIRECT_URL)
+    assert magic_link.redirect_url == settings.LOGIN_REDIRECT_URL
 
 
 @pytest.mark.django_db

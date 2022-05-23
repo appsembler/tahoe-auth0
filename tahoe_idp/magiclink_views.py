@@ -46,4 +46,4 @@ class LoginVerify(TemplateView):
     def login_complete_action(self) -> HttpResponseRedirect:
         token = self.request.GET.get('token')
         magiclink = MagicLink.objects.get(token=token)
-        return HttpResponseRedirect(magiclink.redirect_url)
+        return HttpResponseRedirect(magiclink.redirect_url or settings.LOGIN_REDIRECT_URL)
