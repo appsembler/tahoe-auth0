@@ -16,7 +16,7 @@ class MagicLinkError(Exception):
 
 
 class MagicLink(models.Model):
-    username = models.CharField()
+    username = models.CharField(max_length=254)
     token = models.TextField()
     expiry = models.DateTimeField()
     redirect_url = models.TextField()
