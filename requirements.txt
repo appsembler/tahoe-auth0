@@ -25,3 +25,5 @@ pytest-django
 pytest-cov
 unittest2
 ddt
+pytest-mock
+
