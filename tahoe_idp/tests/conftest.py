@@ -9,6 +9,8 @@ from site_config_client.openedx.test_helpers import override_site_config
 import tahoe_idp.helpers
 
 MOCK_TENANT_ID = '479d8c4e-d441-11ec-8ebb-6f8318ddff9a'
+MOCK_CLIENT_ID = 'a-key'
+MOCK_CLIENT_SECRET = 'a-secret-key'
 
 
 @pytest.fixture(scope='function')
@@ -35,5 +37,10 @@ def mock_tahoe_idp_api_settings(test_func):
     admin_patch = override_site_config(
         config_type='admin',
         TAHOE_IDP_TENANT_ID=MOCK_TENANT_ID,
+        TAHOE_IDP_CLIENT_ID=MOCK_CLIENT_ID,
     )
-    return admin_patch(test_func)
+    secret_patch = override_site_config(
+        config_type='secret',
+        TAHOE_IDP_CLIENT_SECRET=MOCK_CLIENT_SECRET,
+    )
+    return secret_patch(admin_patch(test_func))

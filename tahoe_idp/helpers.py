@@ -78,6 +78,23 @@ def get_required_setting(setting_name):
     return setting_value
 
 
+def get_key_and_secret():
+    """
+    Return tuple with Consumer Key and Consumer Secret for Tahoe IdP OAuth client.
+    """
+    fail_if_tahoe_idp_not_enabled()
+    key = config_client_api.get_admin_value('TAHOE_IDP_CLIENT_ID')
+    secret = config_client_api.get_secret_value('TAHOE_IDP_CLIENT_SECRET')
+
+    if not (key and secret):
+        raise ImproperlyConfigured("Tahoe IdP `TAHOE_IDP_CLIENT_ID` and `TAHOE_IDP_CLIENT_SECRET` are required.")
+
+    return {
+        "key": key,
+        "secret": secret,
+    }
+
+
 def get_idp_base_url():
     """
     Get IdP base_url from Django's settings variable.
@@ -111,24 +128,6 @@ def get_id_jwt_decode_options():
     """
     fail_if_tahoe_idp_not_enabled()
     return settings.TAHOE_IDP_CONFIGS.get("JWT_OPTIONS", {})
-
-
-def get_jwt_algorithms():
-    """
-    Get
-
-    See: https://fusionauth.io/learn/expert-advice/tokens/anatomy-of-jwt
-    """
-    fail_if_tahoe_idp_not_enabled()
-    return settings.TAHOE_IDP_CONFIGS.get("JWT_ALGORITHMS", [
-        "HS256",
-        "RS256",
-        "RS384",
-        "RS512",
-        "ES256",
-        "ES384",
-        "ES512",
-    ])
 
 
 def get_api_client():

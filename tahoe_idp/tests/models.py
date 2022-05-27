@@ -32,6 +32,7 @@ class BaseModel:
 class User(BaseModel):
     NEXT_ID = 1
     cache = {}
+    is_anonymous = False
     _is_active = True
 
     def __init__(self, username, email=None, **extra_user_fields):
