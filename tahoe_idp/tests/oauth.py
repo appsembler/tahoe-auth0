@@ -23,12 +23,6 @@ class BaseOAuthTest(BaseBackendTest):
     access_token_status = 200
     expected_username = ""
 
-    def extra_settings(self):
-        return {
-            "SOCIAL_AUTH_" + self.name + "_KEY": "a-key",
-            "SOCIAL_AUTH_" + self.name + "_SECRET": "a-secret-key",
-        }
-
     def _method(self, method):
         return {"GET": HTTPretty.GET, "POST": HTTPretty.POST}[method]
 

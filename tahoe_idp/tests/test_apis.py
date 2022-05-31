@@ -1,6 +1,8 @@
 """
 Tests for the external `api` helpers module.
 """
+from datetime import datetime
+
 import pytest
 from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -11,6 +13,7 @@ from unittest.mock import patch
 from tahoe_idp.api import (
     get_tahoe_idp_id_by_user,
     request_password_reset,
+    update_tahoe_user_id,
     update_user,
     update_user_email,
 )
@@ -198,4 +201,19 @@ def test_update_user_email_verified(mock_update_user):
             'email': 'test.email@example.com',
         },
         'skipVerification': True,
+    })
+
+
+@patch('tahoe_idp.api.update_user')
+def test_update_tahoe_user_id(mock_update_user):
+    assert not mock_update_user.called
+    user, _social = user_with_social_factory(social_uid='c80f5080-d50c-11ec-b5e5-5b30b2c6a1d9')
+    update_tahoe_user_id(user, now=datetime(year=2020, month=10, day=20))
+    mock_update_user.assert_called_once_with(user, properties={
+        'user': {
+            'data': {
+                'tahoe_user_id': user.id,
+                'tahoe_user_last_login': '2020-10-20T00:00:00',
+            },
+        },
     })

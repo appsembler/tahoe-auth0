@@ -12,6 +12,8 @@ External Python API helpers goes here.
  * For breaking changes, new functions should be created
 """
 
+from datetime import datetime
+import pytz
 from social_django.models import UserSocialAuth
 
 from .constants import BACKEND_NAME
@@ -42,7 +44,7 @@ def get_tahoe_idp_id_by_user(user):
         raise ValueError('Non-anonymous User should be provided')
 
     social_auth_entry = UserSocialAuth.objects.get(
-        user=user, provider=BACKEND_NAME,
+        user_id=user.id, provider=BACKEND_NAME,
     )
     return social_auth_entry.uid
 
@@ -76,5 +78,26 @@ def update_user_email(user, email, set_email_as_verified=False):
 
     if set_email_as_verified:
         properties['skipVerification'] = True
+
+    return update_user(user, properties=properties)
+
+
+def update_tahoe_user_id(user, now=None):
+    """
+    Store the Tahoe `User.id` in FusionAuth via PATCH /api/user/.
+    """
+    if not now:
+        now = datetime.now(pytz.utc)
+
+    now_str = str(now.isoformat())
+
+    properties = {
+        'user': {
+            'data': {
+                'tahoe_user_id': user.id,
+                'tahoe_user_last_login': now_str,
+            },
+        },
+    }
 
     return update_user(user, properties=properties)

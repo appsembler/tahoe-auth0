@@ -33,7 +33,7 @@ def test_get_role_with_default():
     """
     Tests for the `get_role_with_default` helper.
     """
-    assert get_role_with_default(user_data={}) == 'Learner', 'Default to learner'
+    assert get_role_with_default(user_data={}) == 'learner', 'Default to learner'
 
     assert get_role_with_default(user_data={
         'platform_role': 'Administrator',

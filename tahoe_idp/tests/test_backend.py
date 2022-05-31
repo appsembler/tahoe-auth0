@@ -39,7 +39,7 @@ BASE_URL = "https://domain"
 IDP_USER_BODY = {
     "active": True,
     "data": {
-        "platform_role": "Staff",
+        "platform_role": "staff",
     },
     "email": "omar+fusion.auth.trial@appsembler.com",
     "encryptionScheme": "salted-pbkdf2-hmac-sha256",
@@ -133,8 +133,8 @@ class TahoeIdPBackendTest(OAuth2Test):
             "id": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
             "tenantId": "aa4a50e3-0d57-d047-6618-0aea1efadf74",
             "data": {
-                "platform_role": "Staff",
-            }
+                "platform_role": "staff",
+            },
         }
 
         user_details = self.backend.get_user_details({
@@ -146,6 +146,9 @@ class TahoeIdPBackendTest(OAuth2Test):
             "email": "ahmed@appsembler.com",
             "fullname": "Ahmed Jazzar",
             "tahoe_idp_uuid": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
+            "tahoe_idp_metadata": {
+                "platform_role": "staff",
+            },
             "tahoe_idp_is_organization_admin": False,
             "tahoe_idp_is_organization_staff": True,
         }
@@ -173,6 +176,7 @@ class TahoeIdPBackendTest(OAuth2Test):
             "email": "ahmed@appsembler.com",
             "fullname": "ahmedjazzar",  # fullNAme not provided, using `username` as full name
             "tahoe_idp_uuid": "2a106a94-c8b0-4f0b-bb69-fea0022c18d8",
+            "tahoe_idp_metadata": {},
             "tahoe_idp_is_organization_admin": False,
             "tahoe_idp_is_organization_staff": False,
         }

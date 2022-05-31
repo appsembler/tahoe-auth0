@@ -4,7 +4,6 @@ Tahoe Identity Provider backend.
 
 from social_core.backends.oauth import BaseOAuth2
 
-
 from .constants import BACKEND_NAME
 from . import helpers
 
@@ -34,6 +33,13 @@ class TahoeIdpOAuth2(BaseOAuth2):
         params = super().auth_params(state=state)
         params["tenantId"] = helpers.get_tenant_id()
         return params
+
+    def get_key_and_secret(self):
+        """Return tuple with Consumer Key and Consumer Secret for current
+        service provider. Must return (key, secret), order *must* be respected.
+        """
+        oauth_configs = helpers.get_key_and_secret()
+        return oauth_configs['key'], oauth_configs['secret']
 
     def authorization_url(self):
         return "{}/oauth2/authorize".format(helpers.get_idp_base_url())
@@ -68,6 +74,7 @@ class TahoeIdpOAuth2(BaseOAuth2):
             "email": idp_user["email"],
             "fullname": idp_user.get("fullName", username),
             "tahoe_idp_uuid": idp_user["id"],
+            "tahoe_idp_metadata": idp_user.get("data", {}),
             "tahoe_idp_is_organization_admin": is_organization_admin(user_data_role),
             "tahoe_idp_is_organization_staff": is_organization_staff(user_data_role),
         }
