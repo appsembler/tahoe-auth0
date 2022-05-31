@@ -147,3 +147,14 @@ def fusionauth_retrieve_user(user_uuid):
     idp_user_res = get_api_client().retrieve_user(user_uuid)
     idp_user_res.response.raise_for_status()
     return idp_user_res.response.json()["user"]
+
+
+def is_valid_redirect_url(url):
+    """
+    Verify that the given URL if valid or not
+
+    :param url: the URL to test
+    :return: <True> if valid. <False> otherwise
+    """
+    # TODO: implement proper verification steps
+    return True

@@ -1,12 +1,12 @@
 from urllib.parse import urlencode, urljoin
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils import timezone
-from tahoe_idp import magiclink_settings
 
 User = get_user_model()
 
@@ -27,7 +27,7 @@ class MagicLink(models.Model):
         return '{username} - {expiry}'.format(username=self.username, expiry=self.expiry)
 
     def generate_url(self, request: HttpRequest) -> str:
-        url_path = reverse(magiclink_settings.LOGIN_VERIFY_URL)
+        url_path = reverse(settings.LOGIN_VERIFY_URL)
 
         params = {
             'token': self.token,
@@ -38,7 +38,7 @@ class MagicLink(models.Model):
         url_path = '{url_path}?{query}'.format(url_path=url_path, query=query)
         scheme = request.is_secure() and 'https' or 'http'
         url = urljoin(
-            '{scheme}://{studio_domain}'.format(scheme=scheme, studio_domain=magiclink_settings.STUDIO_DOMAIN),
+            '{scheme}://{studio_domain}'.format(scheme=scheme, studio_domain=settings.STUDIO_DOMAIN),
             url_path
         )
         return url
@@ -64,10 +64,10 @@ class MagicLink(models.Model):
 
         user = User.objects.get(username=self.username)
 
-        if not magiclink_settings.ALLOW_SUPERUSER_LOGIN and user.is_superuser:
+        if not settings.ALLOW_SUPERUSER_LOGIN and user.is_superuser:
             self._validation_error('You can not login to a super user account using a magic link')
 
-        if not magiclink_settings.ALLOW_STAFF_LOGIN and user.is_staff:
+        if not settings.ALLOW_STAFF_LOGIN and user.is_staff:
             self._validation_error('You can not login to a staff account using a magic link')
 
         self.used = True

@@ -2,13 +2,13 @@ from datetime import timedelta
 
 import pytest
 from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.http import HttpRequest
 from django.utils import timezone
 
-from tahoe_idp import magiclink_settings as mlsettings
 from tahoe_idp.magiclink_helpers import create_magiclink
 from tahoe_idp.models import MagicLink, MagicLinkError
 from tahoe_idp.tests.magiclink_fixtures import user  # NOQA: F401
@@ -40,11 +40,11 @@ def patch_current_time(datetime_string):
 def test_create_magiclink(settings):
     with patch_current_time('2000-01-01T00:00:00'):
         username = 'test_user'
-        expiry = timezone.now() + timedelta(seconds=mlsettings.AUTH_TIMEOUT)
+        expiry = timezone.now() + timedelta(seconds=settings.AUTH_TIMEOUT)
         request = HttpRequest()
         magic_link = create_magiclink(username, request)
     assert magic_link.username == username
-    assert len(magic_link.token) == mlsettings.TOKEN_LENGTH
+    assert len(magic_link.token) == settings.TOKEN_LENGTH
     assert magic_link.expiry == expiry
     assert magic_link.redirect_url == settings.LOGIN_REDIRECT_URL
 

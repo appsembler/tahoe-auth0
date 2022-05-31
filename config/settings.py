@@ -27,7 +27,6 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -147,3 +146,13 @@ TAHOE_IDP_CONFIGS = {
     "API_CLIENT_ID": os.environ.get("API_CLIENT_ID"),
     "API_CLIENT_SECRET": os.environ.get("API_CLIENT_SECRET"),
 }
+
+LOGIN_FAILED_REDIRECT = ''
+TOKEN_LENGTH = 50
+AUTH_TIMEOUT = 300
+EMAIL_AS_USERNAME = True
+ALLOW_SUPERUSER_LOGIN = True
+ALLOW_STAFF_LOGIN = True
+LOGIN_REQUEST_TIME_LIMIT = 30
+LOGIN_VERIFY_URL = 'tahoe_idp:login_verify'
+STUDIO_DOMAIN = 'studio.example.com'
