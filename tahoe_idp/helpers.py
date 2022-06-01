@@ -9,6 +9,7 @@ from site_config_client.openedx import api as config_client_api
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.utils import http
 
 
 logger = logging.getLogger(__name__)
@@ -148,12 +149,19 @@ def fusionauth_retrieve_user(user_uuid):
     return idp_user_res.response.json()["user"]
 
 
-def is_valid_redirect_url(url):
+def is_valid_redirect_url(redirect_to, request_host, require_https):
     """
     Verify that the given URL if valid or not
 
-    :param url: the URL to test
+    :param redirect_to: The URL in question
+    :param request_host: Originating hostname of the request. This is always considered an acceptable redirect target.
+    :param require_https: Whether HTTPs should be required in the redirect URL.
     :return: <True> if valid. <False> otherwise
     """
-    # TODO: implement proper verification steps
-    return True
+    login_redirect_whitelist = set(getattr(settings, 'LOGIN_REDIRECT_WHITELIST', []))
+    login_redirect_whitelist.add(request_host)
+
+    is_safe_url = http.is_safe_url(
+        redirect_to, allowed_hosts=login_redirect_whitelist, require_https=require_https
+    )
+    return is_safe_url
