@@ -49,7 +49,7 @@ def test_login_verify_with_redirect(client, magic_link):  # NOQA: F811
 @pytest.mark.django_db
 def test_login_verify_failed_not_found(client, settings):
     fail_redirect_url = '/failedredirect'
-    settings.LOGIN_FAILED_REDIRECT = fail_redirect_url
+    settings.MAGICLINK_LOGIN_FAILED_REDIRECT = fail_redirect_url
 
     url = reverse('tahoe_idp:login_verify')
     params = {'token': 'does not matter', 'username': 'does not matter'}
@@ -64,7 +64,7 @@ def test_login_verify_failed_not_found(client, settings):
 @pytest.mark.django_db
 def test_login_verify_failed_redirect(client, settings):
     fail_redirect_url = '/failedredirect'
-    settings.LOGIN_FAILED_REDIRECT = fail_redirect_url
+    settings.MAGICLINK_LOGIN_FAILED_REDIRECT = fail_redirect_url
 
     url = reverse('tahoe_idp:login_verify')
     params = {'token': 'does not matter', 'username': 'does not matter'}
@@ -77,7 +77,7 @@ def test_login_verify_failed_redirect(client, settings):
 
 @pytest.mark.django_db
 def test_login_verify_custom_verify(client, settings, magic_link):  # NOQA: F811,E501
-    settings.LOGIN_VERIFY_URL = 'custom_login_verify'
+    settings.MAGICLINK_LOGIN_VERIFY_URL = 'custom_login_verify'
 
     request = HttpRequest()
     ml = magic_link(request)

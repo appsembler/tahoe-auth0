@@ -27,7 +27,7 @@ class MagicLink(models.Model):
         return '{username} - {expiry}'.format(username=self.username, expiry=self.expiry)
 
     def generate_url(self, request: HttpRequest) -> str:
-        url_path = reverse(settings.LOGIN_VERIFY_URL)
+        url_path = reverse(settings.MAGICLINK_LOGIN_VERIFY_URL)
 
         params = {
             'token': self.token,
@@ -38,7 +38,7 @@ class MagicLink(models.Model):
         url_path = '{url_path}?{query}'.format(url_path=url_path, query=query)
         scheme = request.is_secure() and 'https' or 'http'
         url = urljoin(
-            '{scheme}://{studio_domain}'.format(scheme=scheme, studio_domain=settings.STUDIO_DOMAIN),
+            '{scheme}://{studio_domain}'.format(scheme=scheme, studio_domain=settings.MAGICLINK_STUDIO_DOMAIN),
             url_path
         )
         return url

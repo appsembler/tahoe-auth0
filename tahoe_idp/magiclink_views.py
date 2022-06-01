@@ -24,7 +24,7 @@ class LoginVerify(TemplateView):
         username = request.GET['username']
         user = authenticate(request, token=token, username=username)
         if not user:
-            redirect_url = get_url_path(settings.LOGIN_FAILED_REDIRECT)
+            redirect_url = get_url_path(settings.MAGICLINK_LOGIN_FAILED_REDIRECT)
             return HttpResponseRedirect(redirect_url)
 
         login(request, user)
