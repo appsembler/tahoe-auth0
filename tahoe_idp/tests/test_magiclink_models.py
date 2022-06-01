@@ -108,37 +108,3 @@ def test_validate_used_times(user, magic_link):  # NOQA: F811
         ml.get_user_with_validate(request=request, username=user.username)
 
     error.match('Magic link already used')
-
-
-@pytest.mark.django_db
-def test_validate_superuser(settings, user, magic_link):  # NOQA: F811
-    settings.ALLOW_SUPERUSER_LOGIN = False
-
-    request = HttpRequest()
-    ml = magic_link(request)
-    user.is_superuser = True
-    user.save()
-    with pytest.raises(MagicLinkError) as error:
-        ml.get_user_with_validate(request=request, username=user.username)
-
-    error.match('You can not login to a super user account using a magic link')
-
-    ml = MagicLink.objects.get(token=ml.token)
-    assert ml.used is True
-
-
-@pytest.mark.django_db
-def test_validate_staff(settings, user, magic_link):  # NOQA: F811
-    settings.ALLOW_STAFF_LOGIN = False
-
-    request = HttpRequest()
-    ml = magic_link(request)
-    user.is_staff = True
-    user.save()
-    with pytest.raises(MagicLinkError) as error:
-        ml.get_user_with_validate(request=request, username=user.username)
-
-    error.match('You can not login to a staff account using a magic link')
-
-    ml = MagicLink.objects.get(token=ml.token)
-    assert ml.used is True

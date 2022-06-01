@@ -64,12 +64,6 @@ class MagicLink(models.Model):
 
         user = User.objects.get(username=self.username)
 
-        if not settings.ALLOW_SUPERUSER_LOGIN and user.is_superuser:
-            self._validation_error('You can not login to a super user account using a magic link')
-
-        if not settings.ALLOW_STAFF_LOGIN and user.is_staff:
-            self._validation_error('You can not login to a staff account using a magic link')
-
         self.used = True
         self.save()
 

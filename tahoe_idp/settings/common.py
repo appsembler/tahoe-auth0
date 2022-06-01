@@ -22,14 +22,6 @@ def magiclink_settings(settings):
     except ValueError:
         raise ImproperlyConfigured('"MAGICLINK_AUTH_TIMEOUT" must be an integer')
 
-    settings.ALLOW_SUPERUSER_LOGIN = getattr(settings, 'MAGICLINK_ALLOW_SUPERUSER_LOGIN', True)
-    if not isinstance(settings.ALLOW_SUPERUSER_LOGIN, bool):
-        raise ImproperlyConfigured('"MAGICLINK_ALLOW_SUPERUSER_LOGIN" must be a boolean')
-
-    settings.ALLOW_STAFF_LOGIN = getattr(settings, 'MAGICLINK_ALLOW_STAFF_LOGIN', True)
-    if not isinstance(settings.ALLOW_STAFF_LOGIN, bool):
-        raise ImproperlyConfigured('"MAGICLINK_ALLOW_STAFF_LOGIN" must be a boolean')
-
     try:
         # Time limit in seconds
         settings.LOGIN_REQUEST_TIME_LIMIT = int(getattr(settings, 'MAGICLINK_LOGIN_REQUEST_TIME_LIMIT', 30))
