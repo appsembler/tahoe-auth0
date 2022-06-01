@@ -1,5 +1,4 @@
 from datetime import timedelta
-from importlib import reload
 from urllib.parse import quote
 
 import pytest
@@ -41,9 +40,7 @@ def test_model_string(magic_link):  # NOQA: F811
 
 @pytest.mark.django_db
 def test_generate_url(settings, magic_link):  # NOQA: F811
-    settings.MAGICLINK_LOGIN_VERIFY_URL = 'tahoe_idp:login_verify'
-    from tahoe_idp import magiclink_settings as settings
-    reload(settings)
+    settings.LOGIN_VERIFY_URL = 'tahoe_idp:login_verify'
 
     request = HttpRequest()
     host = settings.STUDIO_DOMAIN
@@ -56,9 +53,7 @@ def test_generate_url(settings, magic_link):  # NOQA: F811
 
 @pytest.mark.django_db
 def test_generate_url_custom_verify(settings, magic_link):  # NOQA: F811
-    settings.MAGICLINK_LOGIN_VERIFY_URL = 'custom_login_verify'
-    from tahoe_idp import magiclink_settings as settings
-    reload(settings)
+    settings.LOGIN_VERIFY_URL = 'custom_login_verify'
 
     request = HttpRequest()
     host = settings.STUDIO_DOMAIN
@@ -67,9 +62,6 @@ def test_generate_url_custom_verify(settings, magic_link):  # NOQA: F811
     request.META['SERVER_PORT'] = 80
     ml = magic_link(request)
     assert ml.generate_url(request) in get_magic_link_verifying_list(host, login_url, ml.token, ml.username)
-    settings.MAGICLINK_LOGIN_VERIFY_URL = 'tahoe_idp:login_verify'
-    from tahoe_idp import magiclink_settings as settings
-    reload(settings)
 
 
 @pytest.mark.django_db
@@ -120,9 +112,7 @@ def test_validate_used_times(user, magic_link):  # NOQA: F811
 
 @pytest.mark.django_db
 def test_validate_superuser(settings, user, magic_link):  # NOQA: F811
-    settings.MAGICLINK_ALLOW_SUPERUSER_LOGIN = False
-    from tahoe_idp import magiclink_settings as settings
-    reload(settings)
+    settings.ALLOW_SUPERUSER_LOGIN = False
 
     request = HttpRequest()
     ml = magic_link(request)
@@ -139,9 +129,7 @@ def test_validate_superuser(settings, user, magic_link):  # NOQA: F811
 
 @pytest.mark.django_db
 def test_validate_staff(settings, user, magic_link):  # NOQA: F811
-    settings.MAGICLINK_ALLOW_STAFF_LOGIN = False
-    from tahoe_idp import magiclink_settings as settings
-    reload(settings)
+    settings.ALLOW_STAFF_LOGIN = False
 
     request = HttpRequest()
     ml = magic_link(request)

@@ -38,6 +38,8 @@ setuptools.setup(
         "lms.djangoapp": [
             "tahoe_idp = tahoe_idp.apps:TahoeIdpConfig",
         ],
-        "cms.djangoapp": [],
+        "cms.djangoapp": [
+            "tahoe_idp = tahoe_idp.apps:TahoeIdpConfig",
+        ],
     },
 )

@@ -18,6 +18,7 @@ from django.conf.urls.static import static
 from django.urls import include, path
 
 from .magiclink_urls import no_login, needs_login, CustomLoginVerify
+from tahoe_idp.magiclink_views import StudioLoginAPIView
 
 urlpatterns = [
     path("", include(("tahoe_idp.urls", "tahoe_idp"), namespace="tahoe_idp")),
@@ -29,6 +30,7 @@ urlpatterns += [
     path('no-login/', no_login, name='no_login'),
     path('needs-login/', needs_login, name='needs_login'),
     path('custom-login-verify/', CustomLoginVerify.as_view(), name='custom_login_verify'),  # NOQA: E501
+    path('studio_login/', StudioLoginAPIView.as_view(), name='studio_login'),
 ]
 
 if settings.DEBUG:
