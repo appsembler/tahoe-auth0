@@ -22,10 +22,6 @@ def magiclink_settings(settings):
     except ValueError:
         raise ImproperlyConfigured('"MAGICLINK_AUTH_TIMEOUT" must be an integer')
 
-    settings.EMAIL_AS_USERNAME = getattr(settings, 'MAGICLINK_EMAIL_AS_USERNAME', True)
-    if not isinstance(settings.EMAIL_AS_USERNAME, bool):
-        raise ImproperlyConfigured('"MAGICLINK_EMAIL_AS_USERNAME" must be a boolean')
-
     settings.ALLOW_SUPERUSER_LOGIN = getattr(settings, 'MAGICLINK_ALLOW_SUPERUSER_LOGIN', True)
     if not isinstance(settings.ALLOW_SUPERUSER_LOGIN, bool):
         raise ImproperlyConfigured('"MAGICLINK_ALLOW_SUPERUSER_LOGIN" must be a boolean')
