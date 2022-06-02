@@ -40,11 +40,11 @@ def patch_current_time(datetime_string):
 def test_create_magiclink(settings):
     with patch_current_time('2000-01-01T00:00:00'):
         username = 'test_user'
-        expiry = timezone.now() + timedelta(seconds=settings.AUTH_TIMEOUT)
+        expiry = timezone.now() + timedelta(seconds=settings.MAGICLINK_AUTH_TIMEOUT)
         request = HttpRequest()
         magic_link = create_magiclink(username, request)
     assert magic_link.username == username
-    assert len(magic_link.token) == settings.TOKEN_LENGTH
+    assert len(magic_link.token) == settings.MAGICLINK_TOKEN_LENGTH
     assert magic_link.expiry == expiry
     assert magic_link.redirect_url == settings.LOGIN_REDIRECT_URL
 

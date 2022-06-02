@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import patch
 
 from ddt import data, ddt, unpack
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
 
@@ -14,6 +15,7 @@ from tahoe_idp.helpers import (
     get_required_setting,
     get_tenant_id,
     is_tahoe_idp_enabled,
+    is_valid_redirect_url,
 )
 
 
@@ -138,3 +140,86 @@ class TestTahoeIdPEnabledHelper(TestCase):
     def test_enabled(self, mock_is_tahoe_idp_enabled):
         fail_if_tahoe_idp_not_enabled()
         mock_is_tahoe_idp_enabled.assert_called_once_with()
+
+
+@ddt
+class TestIsValidRedirectURL(TestCase):
+    """
+    Tests for is_valid_redirect_url helper
+    """
+
+    def test_default_white_list(self):
+        """
+        Guard test to verify that LOGIN_REDIRECT_WHITELIST is empty for all tests. If a test needs it to be filled,
+        it will mock it (override it) internally
+        """
+        assert getattr(settings, 'LOGIN_REDIRECT_WHITELIST', []) == []
+
+    @data(
+        ('home', 'example.com'),
+        ('home', 'subdomain.example.com'),
+        ('home', 'https://example.com'),
+        ('https://example.com', 'example.com'),
+        ('https://example.com/someurl', 'example.com'),
+        ('https://subdomain.example.com/someurl', 'subdomain.example.com'),
+    )
+    @unpack
+    def test_valid_by_comparing_to_host(self, redirect_to, request_host):
+        """
+        Verify that is_valid_redirect_url returns True if redirect_to host is the same as request_host
+        """
+        assert is_valid_redirect_url(redirect_to, request_host, False)
+
+    @data(
+        ('https://subdomain.example.com/someurl', 'example.com'),
+        ('https://otherexample.com', 'example.com'),
+    )
+    @unpack
+    def test_not_valid_by_comparing_to_host(self, redirect_to, request_host):
+        """
+        Verify that is_valid_redirect_url returns False if redirect_to host is anything not equal to request_host
+        """
+        assert not is_valid_redirect_url(redirect_to, request_host, False)
+
+    @data(
+        ('home', 'example.com'),
+        ('home', 'subdomain.example.com'),
+        ('home', 'https://example.com'),
+        ('home', 'http://example.com'),
+        ('https://example.com', 'example.com'),
+    )
+    @unpack
+    def test_valid_by_require_https(self, redirect_to, request_host):
+        """
+        When require_https is set. Verify that is_valid_redirect_url returns True if both
+        redirect_to and request_host are using https
+        """
+        assert is_valid_redirect_url(redirect_to, request_host, True)
+
+    @data(
+        ('http://example.com', 'example.com'),
+        ('http://example.com', 'http://example.com'),
+        ('https://example.com', 'http://example.com'),
+        ('http://example.com', 'https://example.com'),
+    )
+    @unpack
+    def test_not_valid_by_require_https(self, redirect_to, request_host):
+        """
+        When require_https is set. Verify that is_valid_redirect_url returns False if redirect_to or request_host
+        are not using https
+        """
+        assert not is_valid_redirect_url(redirect_to, request_host, True)
+
+    @data(
+        ('https://subdomain.example.com/someurl', 'example.com'),
+        ('https://otherexample.com', 'example.com'),
+    )
+    @unpack
+    def test_valid_by_comparing_to_whitelist(self, redirect_to, request_host):
+        """
+        Verify that is_valid_redirect_url returns True if redirect_to host is in LOGIN_REDIRECT_WHITELIST
+        """
+        assert not is_valid_redirect_url(redirect_to, request_host, True)
+
+        with override_settings(LOGIN_REDIRECT_WHITELIST=['subdomain.example.com', 'otherexample.com']):
+            assert is_valid_redirect_url(redirect_to, request_host, True)

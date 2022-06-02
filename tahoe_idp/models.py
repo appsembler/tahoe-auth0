@@ -27,7 +27,7 @@ class MagicLink(models.Model):
         return '{username} - {expiry}'.format(username=self.username, expiry=self.expiry)
 
     def generate_url(self, request: HttpRequest) -> str:
-        url_path = reverse(settings.LOGIN_VERIFY_URL)
+        url_path = reverse(settings.MAGICLINK_LOGIN_VERIFY_URL)
 
         params = {
             'token': self.token,
@@ -38,7 +38,7 @@ class MagicLink(models.Model):
         url_path = '{url_path}?{query}'.format(url_path=url_path, query=query)
         scheme = request.is_secure() and 'https' or 'http'
         url = urljoin(
-            '{scheme}://{studio_domain}'.format(scheme=scheme, studio_domain=settings.STUDIO_DOMAIN),
+            '{scheme}://{studio_domain}'.format(scheme=scheme, studio_domain=settings.MAGICLINK_STUDIO_DOMAIN),
             url_path
         )
         return url
@@ -63,12 +63,6 @@ class MagicLink(models.Model):
             self._validation_error('Magic link has expired')
 
         user = User.objects.get(username=self.username)
-
-        if not settings.ALLOW_SUPERUSER_LOGIN and user.is_superuser:
-            self._validation_error('You can not login to a super user account using a magic link')
-
-        if not settings.ALLOW_STAFF_LOGIN and user.is_staff:
-            self._validation_error('You can not login to a staff account using a magic link')
 
         self.used = True
         self.save()

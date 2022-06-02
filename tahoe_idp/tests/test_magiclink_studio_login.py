@@ -23,4 +23,4 @@ def test_studio_login(settings, client, user):  # NOQA: F811
     response = client.get(url)
 
     assert response.status_code == 302
-    assert response.url.startswith('http://{studio_domain}'.format(studio_domain=settings.STUDIO_DOMAIN))
+    assert response.url.startswith('http://{studio_domain}'.format(studio_domain=settings.MAGICLINK_STUDIO_DOMAIN))
