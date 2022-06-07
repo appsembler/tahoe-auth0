@@ -103,9 +103,14 @@ class TahoeIdPBackendTest(OAuth2Test):
 
     @mock_tahoe_idp_api_settings
     def test_authorization_url(self, *args):
-        self.assertEqual(
-            self.backend.authorization_url(), "{}/oauth2/authorize".format(BASE_URL)
-        )
+        backend = self.backend
+        assert backend.authorization_url() == "{}/oauth2/authorize".format(BASE_URL), 'by default use login url'
+
+        backend.strategy.session_set("auth_entry", "login")
+        assert backend.authorization_url() == "{}/oauth2/authorize".format(BASE_URL), "use login url when specified"
+
+        backend.strategy.session_set("auth_entry", "register")
+        assert backend.authorization_url() == "{}/oauth2/register".format(BASE_URL), "use register url when specified"
 
     @mock_tahoe_idp_api_settings
     def test_access_token_url(self, *args):
@@ -113,6 +118,14 @@ class TahoeIdPBackendTest(OAuth2Test):
             self.backend.access_token_url(),
             "{}/oauth2/token".format(BASE_URL),
         )
+
+    @mock_tahoe_idp_api_settings
+    def test_fields_stored_in_session_setting(self, *args):
+        backend = self.backend
+
+        assert backend.setting("OTHER_SETTING") is None, "Sanity check: other variables should not be affected"
+        assert backend.setting("FIELDS_STORED_IN_SESSION") == ["auth_entry"], "Store auth_entry in session by default"
+        assert backend.setting("FIELDS_STORED_IN_SESSION", ["other"]) == ["other"], "Explicit default is respected"
 
     @mock_tahoe_idp_api_settings
     def test_revoke_token_url(self, *args):
