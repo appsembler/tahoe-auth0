@@ -9,7 +9,7 @@ from django.db import models
 from django.http import HttpRequest
 from django.utils import timezone
 
-from tahoe_idp.magiclink_helpers import create_magiclink
+from tahoe_idp.magiclink_helpers import create_magiclink, is_studio_allowed_for_user
 from tahoe_idp.models import MagicLink, MagicLinkError
 from tahoe_idp.tests.magiclink_fixtures import user  # NOQA: F401
 
@@ -83,3 +83,50 @@ def test_create_magiclink_login_request_time_limit():
     create_magiclink(username, request)
     with pytest.raises(MagicLinkError):
         create_magiclink(username, request)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('is_staff,is_superuser,expected_result', [
+    (False, False, False),
+    (False, True, True),
+    (True, False, True),
+    (True, True, True),
+])
+def test_is_studio_allowed_for_user_no_external(is_staff, is_superuser, expected_result, settings, user):  # NOQA: F811
+    """
+    Verify that is_studio_allowed_for_user will check for staff and superuser if no external method is set
+    """
+    assert settings.MAGICLINK_STUDIO_PERMISSION_METHOD is None
+    assert not is_studio_allowed_for_user(user)
+
+    user.is_staff = is_staff
+    user.is_superuser = is_superuser
+    user.save()
+    assert is_studio_allowed_for_user(user) == expected_result
+
+
+@pytest.mark.django_db
+def test_is_studio_allowed_for_user_with_external(settings, user):  # NOQA: F811
+    """
+    Verify that is_studio_allowed_for_user will check using the given external method
+    """
+    settings.MAGICLINK_STUDIO_PERMISSION_METHOD = 'tahoe_idp.tests.magiclink_fixtures:external_method_testing'
+
+    assert not is_studio_allowed_for_user(user)
+    user.email = 'permitted@example.com'
+    user.save()
+    assert is_studio_allowed_for_user(user)
+
+
+@pytest.mark.django_db
+def test_is_studio_allowed_for_user_with_failing_external(settings, user):  # NOQA: F811
+    """
+    Verify that is_studio_allowed_for_user will check using the given external method
+    """
+    settings.MAGICLINK_STUDIO_PERMISSION_METHOD = 'external_module.does_not:exists'
+
+    with patch('tahoe_idp.magiclink_helpers.log.warning') as mock_log:
+        assert not is_studio_allowed_for_user(user)
+    mock_log.assert_called_once_with(
+        "tahoue_idp.is_studio_allowed_for_user failed for user test_user: No module named 'external_module'"
+    )

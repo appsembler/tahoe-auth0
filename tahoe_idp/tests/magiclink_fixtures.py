@@ -24,3 +24,10 @@ def magic_link(user):
         return create_magiclink(user.username, request, redirect_url='')
 
     return _create
+
+
+def external_method_testing(user):
+    """
+    used to test the functionality of is_studio_allowed_for_user helper
+    """
+    return user.email == 'permitted@example.com'

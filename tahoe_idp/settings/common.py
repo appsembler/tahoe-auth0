@@ -14,6 +14,9 @@ def magiclink_settings(settings):
     MAGICLINK_LOGIN_VERIFY_URL: URL to be used to verify the validity of the magic-link. Keep it on default
         unless a customization is needed for some reason!
     MAGICLINK_STUDIO_DOMAIN: Studio domain to be used by magic-link views
+    MAGICLINK_STUDIO_PERMISSION_METHOD: path of the method to be used to check if the user is permitted to use
+        magic-links to studio or not. The path must be in the form: "module.submodule:method". It should also be in
+        the form: def method(user)
     """
     settings.MAGICLINK_LOGIN_FAILED_REDIRECT = getattr(settings, 'MAGICLINK_LOGIN_FAILED_REDIRECT', '')
 
@@ -42,6 +45,8 @@ def magiclink_settings(settings):
     settings.MAGICLINK_LOGIN_VERIFY_URL = getattr(settings, 'MAGICLINK_LOGIN_VERIFY_URL', 'tahoe_idp:login_verify')
 
     settings.MAGICLINK_STUDIO_DOMAIN = getattr(settings, 'MAGICLINK_STUDIO_DOMAIN', 'studio.example.com')
+
+    settings.MAGICLINK_STUDIO_PERMISSION_METHOD = getattr(settings, 'MAGICLINK_STUDIO_PERMISSION_METHOD', None)
 
     # MagicLinkBackend should be the first used backend
     settings.AUTHENTICATION_BACKENDS.insert(0, 'tahoe_idp.magiclink_backends.MagicLinkBackend')
