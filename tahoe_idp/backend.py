@@ -21,6 +21,14 @@ class TahoeIdpOAuth2(BaseOAuth2):
     REDIRECT_STATE = False
     REVOKE_TOKEN_METHOD = "GET"  # nosec
 
+    def setting(self, name, default=None):
+        """
+        Override setting to ensure `auth_entry` is stored in session.
+        """
+        if name == "FIELDS_STORED_IN_SESSION" and not default:
+            default = ["auth_entry"]
+        return super().setting(name, default)
+
     def auth_params(self, state=None):
         """
         Overrides the parent's class `auth_params` to add the organization parameter
@@ -42,7 +50,16 @@ class TahoeIdpOAuth2(BaseOAuth2):
         return oauth_configs['key'], oauth_configs['secret']
 
     def authorization_url(self):
-        return "{}/oauth2/authorize".format(helpers.get_idp_base_url())
+        auth_entry = self.strategy.session_get('auth_entry')
+
+        endpoint = 'authorize'
+        if auth_entry == 'register':
+            endpoint = 'register'
+
+        return "{base}/oauth2/{endpoint}".format(
+            endpoint=endpoint,
+            base=helpers.get_idp_base_url(),
+        )
 
     def access_token_url(self):
         return "{}/oauth2/token".format(helpers.get_idp_base_url())
