@@ -2,6 +2,7 @@
 Helpers
 """
 
+from importlib import import_module
 import logging
 
 from fusionauth.fusionauth_client import FusionAuthClient
@@ -165,3 +166,21 @@ def is_valid_redirect_url(redirect_to, request_host, require_https):
         redirect_to, allowed_hosts=login_redirect_whitelist, require_https=require_https
     )
     return is_safe_url
+
+
+def import_from_path(path):
+    """
+    Import a function or class from a string Python path.
+
+    Copied from Figures
+
+    Note: This helper does _not_ attempt to handle exceptions well. Instead, it throws them as is.
+    The rationale is that such exceptions are only fixable at the deployment time and attempting to handle such errors
+    would risk hiding the errors and making it more difficult to fix.
+
+    :param path: string path in the format "module.submodule:variable".
+    :return object
+    """
+    module_path, variable_name = path.split(':', 1)
+    module = import_module(module_path)
+    return getattr(module, variable_name)
