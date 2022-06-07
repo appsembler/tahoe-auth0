@@ -5,6 +5,7 @@ from ddt import data, ddt, unpack
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
+from django.utils.timezone import utc
 
 from site_config_client.openedx.test_helpers import override_site_config
 
@@ -14,6 +15,7 @@ from tahoe_idp.helpers import (
     get_idp_base_url,
     get_required_setting,
     get_tenant_id,
+    import_from_path,
     is_tahoe_idp_enabled,
     is_valid_redirect_url,
 )
@@ -223,3 +225,31 @@ class TestIsValidRedirectURL(TestCase):
 
         with override_settings(LOGIN_REDIRECT_WHITELIST=['subdomain.example.com', 'otherexample.com']):
             assert is_valid_redirect_url(redirect_to, request_host, True)
+
+
+class TestImportFromPath(TestCase):
+    """
+    Test import_from_path helper. Copied from Figures
+    """
+    def test_import_from_path_working(self):
+        utc_tz_path = 'django.utils.timezone:utc'
+        imported_utc = import_from_path(utc_tz_path)
+        assert imported_utc is utc, 'Should import the utc variable correctly'
+
+    def test_import_from_path_failing(self):
+        utc_tz_path = 'django.utils.timezone:non_existent_variable'
+        with pytest.raises(AttributeError):
+            # Should raise an AttributeError because the helper is using getattr()
+            import_from_path(utc_tz_path)
+
+    def test_import_from_path_missing_module(self):
+        utc_tz_path = 'non_existent_module.submodule:some_variable'
+        with pytest.raises(ImportError):
+            # Should raise an ImportError because the module does not exist
+            import_from_path(utc_tz_path)
+
+    def test_import_from_bad_syntax(self):
+        utc_tz_path = 'not a path'
+        with pytest.raises(ValueError):
+            # Malformed path
+            import_from_path(utc_tz_path)
