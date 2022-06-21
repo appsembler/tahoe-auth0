@@ -19,7 +19,7 @@ class MagicLink(models.Model):
     username = models.CharField(max_length=254)
     token = models.TextField()
     expiry = models.DateTimeField()
-    redirect_url = models.TextField()
+    redirect_url = models.TextField(null=True)
     used = models.BooleanField(default=False)
     created_on = models.DateTimeField()
 

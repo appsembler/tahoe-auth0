@@ -6,7 +6,6 @@ from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from tahoe_idp.helpers import import_from_path
-from tahoe_idp.magiclink_utils import get_url_path
 from tahoe_idp.models import MagicLink, MagicLinkError
 
 log = logging.getLogger(__name__)
@@ -15,7 +14,7 @@ log = logging.getLogger(__name__)
 def create_magiclink(
     username: str,
     request: HttpRequest,
-    redirect_url: str = '',
+    redirect_url: str = None,
 ) -> MagicLink:
     limit = timezone.now() - timedelta(seconds=settings.MAGICLINK_LOGIN_REQUEST_TIME_LIMIT)  # NOQA: E501
     over_limit = MagicLink.objects.filter(username=username, created_on__gte=limit)
@@ -24,9 +23,6 @@ def create_magiclink(
 
     # Only the last magic link is usable per user
     MagicLink.objects.filter(username=username, used=False).update(used=True)
-
-    if not redirect_url:
-        redirect_url = get_url_path(settings.LOGIN_REDIRECT_URL)
 
     expiry = timezone.now() + timedelta(seconds=settings.MAGICLINK_AUTH_TIMEOUT)
     magic_link = MagicLink.objects.create(
