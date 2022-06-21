@@ -9,13 +9,13 @@ def test_app_config():
     assert TahoeIdpConfig.plugin_app == {
         'settings_config': {
             'cms.djangoapp': {
-                'common': {
-                    'relative_path': 'settings.common'
+                'production': {  # Needs to be production settings, otherwise devstack will override it
+                    'relative_path': 'settings.production'
                 },
             },
             'lms.djangoapp': {
-                'common': {
-                    'relative_path': 'settings.common'
+                'production': {  # Needs to be production settings, otherwise devstack will override it
+                    'relative_path': 'settings.production'
                 },
             }
         },

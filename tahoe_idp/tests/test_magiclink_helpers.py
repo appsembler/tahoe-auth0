@@ -46,7 +46,7 @@ def test_create_magiclink(settings):
     assert magic_link.username == username
     assert len(magic_link.token) == settings.MAGICLINK_TOKEN_LENGTH
     assert magic_link.expiry == expiry
-    assert magic_link.redirect_url == settings.LOGIN_REDIRECT_URL
+    assert not magic_link.redirect_url, 'Should allow empty redirect_url'
 
 
 @pytest.mark.django_db
