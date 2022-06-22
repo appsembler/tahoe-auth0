@@ -1,5 +1,4 @@
 # fdddlake8: nodddqa: E501
-import warnings
 from django.core.exceptions import ImproperlyConfigured
 
 
@@ -20,16 +19,15 @@ def magiclink_settings(settings):
     """
     settings.MAGICLINK_LOGIN_FAILED_REDIRECT = getattr(settings, 'MAGICLINK_LOGIN_FAILED_REDIRECT', '')
 
+    minimum_token_length = 20
+    default_token_length = 50
+
     try:
-        settings.MAGICLINK_TOKEN_LENGTH = int(getattr(settings, 'MAGICLINK_TOKEN_LENGTH', 50))
+        token_length = int(getattr(settings, 'MAGICLINK_TOKEN_LENGTH', default_token_length))
     except ValueError:
         raise ImproperlyConfigured('"MAGICLINK_TOKEN_LENGTH" must be an integer')
-    else:
-        if settings.MAGICLINK_TOKEN_LENGTH < 20:
-            warning = (
-                'Shorter MAGICLINK_TOKEN_LENGTH values make your login more vulnerable to brute force attacks'
-            )
-            warnings.warn(warning, RuntimeWarning)
+
+    settings.MAGICLINK_TOKEN_LENGTH = max(token_length, minimum_token_length)
 
     try:
         # In seconds
@@ -49,8 +47,15 @@ def magiclink_settings(settings):
     settings.MAGICLINK_STUDIO_PERMISSION_METHOD = getattr(settings, 'MAGICLINK_STUDIO_PERMISSION_METHOD', None)
 
     # MagicLinkBackend should be the first used backend
-    settings.AUTHENTICATION_BACKENDS.insert(0, 'tahoe_idp.magiclink_backends.MagicLinkBackend')
+    magiclink_backend = 'tahoe_idp.magiclink_backends.MagicLinkBackend'
+    if magiclink_backend not in settings.AUTHENTICATION_BACKENDS:
+        settings.AUTHENTICATION_BACKENDS.insert(0, magiclink_backend)
 
 
 def plugin_settings(settings):
     magiclink_settings(settings)
+
+    # Add the Social / ThirdPartyAuth backend
+    tahoe_idp_backend = 'tahoe_idp.backend.TahoeIdpOAuth2'
+    if tahoe_idp_backend not in settings.THIRD_PARTY_AUTH_BACKENDS:
+        settings.THIRD_PARTY_AUTH_BACKENDS.insert(0, tahoe_idp_backend)

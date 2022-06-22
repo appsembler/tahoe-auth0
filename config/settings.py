@@ -131,11 +131,14 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 SOCIAL_TAHOE_IDP_SCOPE = ["openid", "offline_access"]
 
-AUTHENTICATION_BACKENDS = {
-    "tahoe_idp.backend.TahoeIdpOAuth2",
+AUTHENTICATION_BACKENDS = [
     "tahoe_idp.magiclink_backends.MagicLinkBackend",
     "django.contrib.auth.backends.ModelBackend",
-}
+]
+
+THIRD_PARTY_AUTH_BACKENDS = [
+    "tahoe_idp.backend.TahoeIdpOAuth2",
+]
 
 LOGIN_URL = "/login/tahoe-idp"
 
