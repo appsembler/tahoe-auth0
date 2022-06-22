@@ -1,5 +1,4 @@
 # fdddlake8: nodddqa: E501
-import warnings
 from django.core.exceptions import ImproperlyConfigured
 
 
