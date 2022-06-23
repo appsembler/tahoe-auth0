@@ -20,12 +20,12 @@ class TahoeIdpConfig(AppConfig):
         'settings_config': {
             'lms.djangoapp': {
                 'production': {
-                    'relative_path': 'settings.production',
+                    'relative_path': 'settings.lms_production',
                 },
             },
             'cms.djangoapp': {
                 'production': {
-                    'relative_path': 'settings.production',
+                    'relative_path': 'settings.cms_production',
                 },
             },
         },

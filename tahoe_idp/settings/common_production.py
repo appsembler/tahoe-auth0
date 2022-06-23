@@ -1,4 +1,7 @@
-# fdddlake8: nodddqa: E501
+"""
+Common production settings.
+"""
+
 from django.core.exceptions import ImproperlyConfigured
 
 
@@ -45,17 +48,3 @@ def magiclink_settings(settings):
     settings.MAGICLINK_STUDIO_DOMAIN = getattr(settings, 'MAGICLINK_STUDIO_DOMAIN', 'studio.example.com')
 
     settings.MAGICLINK_STUDIO_PERMISSION_METHOD = getattr(settings, 'MAGICLINK_STUDIO_PERMISSION_METHOD', None)
-
-    # MagicLinkBackend should be the first used backend
-    magiclink_backend = 'tahoe_idp.magiclink_backends.MagicLinkBackend'
-    if magiclink_backend not in settings.AUTHENTICATION_BACKENDS:
-        settings.AUTHENTICATION_BACKENDS.insert(0, magiclink_backend)
-
-
-def plugin_settings(settings):
-    magiclink_settings(settings)
-
-    # Add the Social / ThirdPartyAuth backend
-    tahoe_idp_backend = 'tahoe_idp.backend.TahoeIdpOAuth2'
-    if tahoe_idp_backend not in settings.THIRD_PARTY_AUTH_BACKENDS:
-        settings.THIRD_PARTY_AUTH_BACKENDS.insert(0, tahoe_idp_backend)
