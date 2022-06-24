@@ -15,14 +15,14 @@ def test_lms_tpa_backend_settings(settings):
     """
     Test settings third party auth backends.
     """
-    settings.THIRD_PARTY_AUTH_BACKENDS = ['dummy_backend']
+    settings.AUTHENTICATION_BACKENDS = ['dummy_backend']
     lms_production.plugin_settings(settings)
 
     backend_path = 'tahoe_idp.backend.TahoeIdpOAuth2'
-    assert backend_path == settings.THIRD_PARTY_AUTH_BACKENDS[0], 'TahoeIdpOAuth2 goes first'
+    assert backend_path == settings.AUTHENTICATION_BACKENDS[0], 'TahoeIdpOAuth2 goes first'
 
     lms_production.plugin_settings(settings)
-    assert settings.THIRD_PARTY_AUTH_BACKENDS.count(backend_path) == 1, 'adds only one instance'
+    assert settings.AUTHENTICATION_BACKENDS.count(backend_path) == 1, 'adds only one instance'
 
 
 def test_cms_authentication_backend_settings(settings):

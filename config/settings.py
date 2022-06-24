@@ -136,9 +136,6 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
-THIRD_PARTY_AUTH_BACKENDS = [
-    "tahoe_idp.backend.TahoeIdpOAuth2",
-]
 
 LOGIN_URL = "/login/tahoe-idp"
 
