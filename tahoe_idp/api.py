@@ -26,8 +26,7 @@ def request_password_reset(email):
     """
     api_client = helpers.get_api_client()
     client_response = api_client.forgot_password({'loginId': email})
-    http_response = client_response.response
-    http_response.raise_for_status()
+    http_response = helpers.get_successful_fusion_auth_http_response(client_response)
     return http_response
 
 
@@ -61,8 +60,7 @@ def update_user(user, properties):
         user_id=idp_user_id,
         request=properties,
     )
-    http_response = client_response.response
-    http_response.raise_for_status()
+    http_response = helpers.get_successful_fusion_auth_http_response(client_response)
     return http_response
 
 
@@ -101,3 +99,19 @@ def update_tahoe_user_id(user, now=None):
     }
 
     return update_user(user, properties=properties)
+
+
+def deactivate_user(idp_user_id):
+    """
+    Soft delete the IdP user account.
+
+    This deactivates the user. Permanent deletion is still needed.
+
+    See: https://fusionauth.io/docs/v1/tech/apis/users#delete-a-user
+    """
+    api_client = helpers.get_api_client()
+    client_response = api_client.deactivate_user(
+        user_id=idp_user_id,
+    )
+    http_response = helpers.get_successful_fusion_auth_http_response(client_response)
+    return http_response
