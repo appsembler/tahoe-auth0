@@ -80,6 +80,22 @@ def get_required_setting(setting_name):
     return setting_value
 
 
+def get_successful_fusion_auth_http_response(fa_response):
+    """
+    Raise exceptions for HTTP errors and log the error messages.
+
+    :param fa_response: ClientResponse (fusionauth)
+    :return Response (requests)
+    """
+    http_response = fa_response.response
+    if not fa_response.was_successful():
+        logger.warning('Failed fusionauth response status=%s, content=%s',
+                       http_response.status_code, http_response.content.decode('utf-8'))
+
+    http_response.raise_for_status()
+    return http_response
+
+
 def get_key_and_secret():
     """
     Return tuple with Consumer Key and Consumer Secret for Tahoe IdP OAuth client.
@@ -146,8 +162,8 @@ def get_api_client():
 
 def fusionauth_retrieve_user(user_uuid):
     idp_user_res = get_api_client().retrieve_user(user_uuid)
-    idp_user_res.response.raise_for_status()
-    return idp_user_res.response.json()["user"]
+    response = get_successful_fusion_auth_http_response(idp_user_res)
+    return response.json()["user"]
 
 
 def is_valid_redirect_url(redirect_to, request_host, require_https):

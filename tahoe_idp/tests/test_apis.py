@@ -11,6 +11,7 @@ from social_django.models import UserSocialAuth
 from unittest.mock import patch
 
 from tahoe_idp.api import (
+    deactivate_user,
     get_tahoe_idp_id_by_user,
     request_password_reset,
     update_tahoe_user_id,
@@ -152,7 +153,7 @@ def test_update_user_helper(requests_mock):
 
 
 @mock_tahoe_idp_api_settings
-def test_failed_update_user_helper(requests_mock):
+def test_failed_update_user_helper(requests_mock, caplog):
     """
     Ensure an error is raised if something goes wrong with `update_user`.
     """
@@ -170,6 +171,8 @@ def test_failed_update_user_helper(requests_mock):
         update_user(user, properties={
             'name': 'new name',
         })
+
+    assert 'Connection does not exist' in caplog.text, 'Should log the response body'
 
 
 @patch('tahoe_idp.api.update_user')
@@ -217,3 +220,20 @@ def test_update_tahoe_user_id(mock_update_user):
             },
         },
     })
+
+
+@mock_tahoe_idp_api_settings
+def test_deactivate_user_helper(requests_mock):
+    """
+    Can update user.
+    """
+    user_uuid = 'c80f5080-d50c-11ec-b5e5-5b30b2c6a1d9'
+    requests_mock.delete(
+        'https://domain/api/user/{user_uuid}'.format(user_uuid=user_uuid),
+        headers={
+            'content-type': 'application/json',
+        },
+        text='{"success": True}',
+    )
+    response = deactivate_user(user_uuid)
+    assert response.status_code == 200, 'should succeed: {}'.format(response.content.decode('utf-8'))
