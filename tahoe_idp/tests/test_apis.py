@@ -12,6 +12,7 @@ from unittest.mock import patch
 
 from tahoe_idp.api import (
     deactivate_user,
+    get_logout_url,
     get_tahoe_idp_id_by_user,
     request_password_reset,
     update_tahoe_user_id,
@@ -220,6 +221,16 @@ def test_update_tahoe_user_id(mock_update_user):
             },
         },
     })
+
+
+@mock_tahoe_idp_api_settings
+def test_get_logout_url():
+    url = get_logout_url('/')
+    assert url == (
+        'https://domain/oauth2/logout?'
+        'tenantId=479d8c4e-d441-11ec-8ebb-6f8318ddff9a&'
+        'client_id=a-key&post_logout_redirect_uri=%2F'
+    )
 
 
 @mock_tahoe_idp_api_settings
