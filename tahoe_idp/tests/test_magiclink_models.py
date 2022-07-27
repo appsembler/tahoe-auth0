@@ -40,11 +40,11 @@ def test_model_string(magic_link):  # NOQA: F811
 
 @pytest.mark.django_db
 def test_generate_url(settings, magic_link):  # NOQA: F811
-    settings.MAGICLINK_LOGIN_VERIFY_URL = 'tahoe_idp:login_verify'
+    settings.MAGICLINK_LOGIN_VERIFY_URL = 'tahoe_idp:verify_login'
 
     request = HttpRequest()
     host = settings.MAGICLINK_STUDIO_DOMAIN
-    login_url = reverse('tahoe_idp:login_verify')
+    login_url = reverse('tahoe_idp:verify_login')
     request.META['SERVER_NAME'] = host
     request.META['SERVER_PORT'] = 80
     ml = magic_link(request)

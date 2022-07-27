@@ -3,7 +3,7 @@ from urllib.parse import urlencode
 import pytest
 from django.contrib.auth import get_user_model
 from django.http import HttpRequest
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 
 from tahoe_idp.tests.magiclink_fixtures import magic_link, user  # NOQA: F401
 
@@ -12,8 +12,12 @@ User = get_user_model()
 
 
 @pytest.mark.django_db
-def test_login_verify(client, settings, magic_link):  # NOQA: F811
-    url = reverse('tahoe_idp:login_verify')
+@pytest.mark.parametrize('login_verify_url', [
+    reverse_lazy('tahoe_idp:verify_login'),
+    '/verify_login',
+    '/verify_login/',
+])
+def test_login_verify(caplog, client, settings, magic_link, login_verify_url):  # NOQA: F811
     request = HttpRequest()
     ml = magic_link(request)
     ml.save()
@@ -21,7 +25,7 @@ def test_login_verify(client, settings, magic_link):  # NOQA: F811
     params = {'token': ml.token}
     params['username'] = ml.username
     query = urlencode(params)
-    url = '{url}?{query}'.format(url=url, query=query)
+    url = '{url}?{query}'.format(url=login_verify_url, query=query)
 
     response = client.get(url)
     assert response.status_code == 302
@@ -30,6 +34,7 @@ def test_login_verify(client, settings, magic_link):  # NOQA: F811
     needs_login_url = reverse('needs_login')
     needs_login_response = client.get(needs_login_url)
     assert needs_login_response.status_code == 200
+    assert 'Magic link login successful for' in caplog.text
 
 
 @pytest.mark.django_db
@@ -51,7 +56,7 @@ def test_login_verify_failed_not_found(client, settings):
     fail_redirect_url = '/failedredirect'
     settings.MAGICLINK_LOGIN_FAILED_REDIRECT = fail_redirect_url
 
-    url = reverse('tahoe_idp:login_verify')
+    url = reverse('tahoe_idp:verify_login')
     params = {'token': 'does not matter', 'username': 'does not matter'}
     query = urlencode(params)
     url = '{url}?{query}'.format(url=url, query=query)
@@ -62,17 +67,18 @@ def test_login_verify_failed_not_found(client, settings):
 
 
 @pytest.mark.django_db
-def test_login_verify_failed_redirect(client, settings):
+def test_login_verify_failed_redirect(caplog, client, settings):
     fail_redirect_url = '/failedredirect'
     settings.MAGICLINK_LOGIN_FAILED_REDIRECT = fail_redirect_url
 
-    url = reverse('tahoe_idp:login_verify')
+    url = reverse('tahoe_idp:verify_login')
     params = {'token': 'does not matter', 'username': 'does not matter'}
     query = urlencode(params)
     url = '{url}?{query}'.format(url=url, query=query)
 
     response = client.get(url)
     assert response.url == fail_redirect_url
+    assert 'Magic link login failed for' in caplog.text
 
 
 @pytest.mark.django_db

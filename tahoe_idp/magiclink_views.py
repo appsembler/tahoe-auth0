@@ -25,10 +25,11 @@ class LoginVerify(TemplateView):
         user = authenticate(request, token=token, username=username)
         if not user:
             redirect_url = get_url_path(settings.MAGICLINK_LOGIN_FAILED_REDIRECT)
+            log.warning('Magic link login failed for %s', username)
             return HttpResponseRedirect(redirect_url)
 
         login(request, user)
-        log.info('Login successful for {username}'.format(username=username))
+        log.warning('Magic link login successful for %s', username)
 
         response = self.login_complete_action()
 
