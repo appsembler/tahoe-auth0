@@ -9,6 +9,7 @@ from . import helpers
 
 from .permissions import (
     get_role_with_default,
+    is_course_author,
     is_organization_admin,
     is_organization_staff,
 )
@@ -92,6 +93,7 @@ class TahoeIdpOAuth2(BaseOAuth2):
             "fullname": idp_user.get("fullName", username),
             "tahoe_idp_uuid": idp_user["id"],
             "tahoe_idp_metadata": idp_user.get("data", {}),
+            "tahoe_idp_is_course_author": is_course_author(user_data_role),
             "tahoe_idp_is_organization_admin": is_organization_admin(user_data_role),
             "tahoe_idp_is_organization_staff": is_organization_staff(user_data_role),
         }
