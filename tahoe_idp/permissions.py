@@ -5,6 +5,7 @@ Permissions constants and utils for the tahoe-idp backend.
 
 IDP_ORG_ADMIN_ROLE = 'administrator'
 IDP_STUDIO_ROLE = 'staff'
+IDP_COURSE_AUTHOR = 'course_author'
 IDP_DEFAULT_ROLE = 'learner'
 
 
@@ -25,6 +26,14 @@ def is_organization_staff(role):
     """
     role = role.lower()
     return role == IDP_STUDIO_ROLE or is_organization_admin(role)
+
+
+def is_course_author(role):
+    """
+    Check if the role has Studio access which grants access to Open edX Studio but no org-wide access.
+    """
+    role = role.lower()
+    return role == IDP_COURSE_AUTHOR
 
 
 def get_role_with_default(user_data):

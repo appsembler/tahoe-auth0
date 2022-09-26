@@ -4,6 +4,7 @@ Tests for the permission module.
 
 from tahoe_idp.permissions import (
     get_role_with_default,
+    is_course_author,
     is_organization_admin,
     is_organization_staff,
 )
@@ -27,6 +28,17 @@ def test_organization_staff():
     assert is_organization_staff('Staff'), 'Staff, is Staff'
     assert not is_organization_staff('Learner'), 'Learner is not an staff'
     assert not is_organization_staff('SomethingElse'), 'Helper should be safe to use for new roles'
+
+
+def test_is_course_author():
+    """
+    Tests for the is_course_author helper.
+    """
+    assert not is_course_author('Administrator'), 'match course_author explicitly'
+    assert not is_course_author('Staff'), 'match course_author explicitly'
+    assert not is_course_author('Learner'), 'Learner is not an course author'
+    assert not is_course_author('SomethingElse'), 'Helper should be safe to use for new roles'
+    assert is_course_author('Course_Author'), 'case insensitively match course_author'
 
 
 def test_get_role_with_default():

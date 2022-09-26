@@ -164,6 +164,7 @@ class TahoeIdPBackendTest(OAuth2Test):
             },
             "tahoe_idp_is_organization_admin": False,
             "tahoe_idp_is_organization_staff": True,
+            "tahoe_idp_is_course_author": False,
         }
 
     @patch('tahoe_idp.helpers.fusionauth_retrieve_user')
@@ -192,4 +193,5 @@ class TahoeIdPBackendTest(OAuth2Test):
             "tahoe_idp_metadata": {},
             "tahoe_idp_is_organization_admin": False,
             "tahoe_idp_is_organization_staff": False,
+            "tahoe_idp_is_course_author": False,
         }
