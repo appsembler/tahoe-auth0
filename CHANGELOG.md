@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 2.1.2 - 2023-01-02
+ - Support for `idp_hint` URL parameter
+
 ## 2.1.0 - 2022-09-23
  - Support for `course_author` Studio-only role
 
