@@ -34,13 +34,21 @@ class TahoeIdpOAuth2(BaseOAuth2):
         """
         Overrides the parent's class `auth_params` to add the organization parameter
         to the auth request.
+
         The API requires us to pass the tenant ID since we are not going
         to ask the user to manually enter their organization name in the login form.
         If we decide against this, we need to enable `Display Organization Prompt` in
         FusionAuth Management Console.
+
+        On the other hand, we can add `idp_hint` parameter to the authorization URL to
+        allow FusionAuth to automatically redirect to the provider's login page instead of
+        showing FusionAuth form with (Login to SAML) button
         """
         params = super().auth_params(state=state)
         params["tenantId"] = helpers.get_tenant_id()
+        default_idp_hint = helpers.get_default_idp_hint()
+        if default_idp_hint:
+            params["idp_hint"] = default_idp_hint
         return params
 
     def get_key_and_secret(self):

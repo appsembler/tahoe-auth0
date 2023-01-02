@@ -9,7 +9,12 @@ from unittest.mock import patch
 from httpretty import HTTPretty
 
 from .oauth import OAuth2Test
-from .conftest import mock_tahoe_idp_api_settings, MOCK_TENANT_ID
+from .conftest import (
+    mock_tahoe_idp_api_settings,
+    mock_tahoe_idp_api_settings_with_idp_hint,
+    MOCK_DEFAULT_IDP_HINT,
+    MOCK_TENANT_ID,
+)
 
 
 JWK_KEY = {
@@ -99,7 +104,14 @@ class TahoeIdPBackendTest(OAuth2Test):
     def test_auth_params(self, *args):
         auth_params = self.backend.auth_params()
         assert "tenantId" in auth_params
+        assert "idp_hint" not in auth_params
         assert auth_params["tenantId"] == MOCK_TENANT_ID
+
+    @mock_tahoe_idp_api_settings_with_idp_hint
+    def test_default_idp_hint(self, *args):
+        auth_params = self.backend.auth_params()
+        assert "idp_hint" in auth_params
+        assert auth_params["idp_hint"] == MOCK_DEFAULT_IDP_HINT
 
     @mock_tahoe_idp_api_settings
     def test_authorization_url(self, *args):

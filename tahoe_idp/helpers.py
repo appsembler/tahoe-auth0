@@ -122,7 +122,7 @@ def get_idp_base_url():
 
 def get_tenant_id():
     """
-    Get API_KEY for the FusionAuth API client.
+    Get TAHOE_IDP_TENANT_ID for the FusionAuth API client.
     """
     fail_if_tahoe_idp_not_enabled()
     TAHOE_IDP_TENANT_ID = config_client_api.get_admin_value("TAHOE_IDP_TENANT_ID")
@@ -158,6 +158,14 @@ def get_api_client():
     )
     client.set_tenant_id(get_tenant_id())
     return client
+
+
+def get_default_idp_hint():
+    """
+    Get DEFAULT_IDP_HINT for auto-redirect to predefined Identity Provider
+    """
+    fail_if_tahoe_idp_not_enabled()
+    return config_client_api.get_admin_value("DEFAULT_IDP_HINT")
 
 
 def fusionauth_retrieve_user(user_uuid):
