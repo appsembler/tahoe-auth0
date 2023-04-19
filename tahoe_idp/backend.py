@@ -2,6 +2,10 @@
 Tahoe Identity Provider backend.
 """
 
+import logging
+import time
+
+from django.conf import settings
 from social_core.backends.oauth import BaseOAuth2
 
 from .constants import BACKEND_NAME
@@ -13,6 +17,9 @@ from .permissions import (
     is_organization_admin,
     is_organization_staff,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class TahoeIdpOAuth2(BaseOAuth2):
@@ -89,11 +96,25 @@ class TahoeIdpOAuth2(BaseOAuth2):
         Fetches the user details from response's JWT and build the social_core JSON object.
         """
         tahoe_idp_uuid = response["userId"]
-        idp_user = helpers.fusionauth_retrieve_user(tahoe_idp_uuid)
+        username = None
+
+        # Deal with race conditions in setting of FusionAuth user username
+        # when not set explicitly by user through a Form.
+        # see https://appsembler.atlassian.net/browse/ENG-80
+        api_retries = 0
+        max_retries = settings.FEATURES.get('TAHOE_MAX_IDP_USER_API_RETRIES', 5)
+        while username is None:
+            if api_retries <= max_retries:
+                idp_user = helpers.fusionauth_retrieve_user(tahoe_idp_uuid)
+                username = idp_user.get("username")
+                time.sleep(1)
+                api_retries += 1
+            else:
+                username = idp_user["id"]
+                logger.warning("tahoe-idp found no username from IdP.  Set to %s", username)
 
         user_data = idp_user.get("data", {})
         user_data_role = get_role_with_default(user_data)
-        username = idp_user.get("username", idp_user["id"])
 
         return {
             "username": username,
