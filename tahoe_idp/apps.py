@@ -29,4 +29,37 @@ class TahoeIdpConfig(AppConfig):
                 },
             },
         },
+        'signals_config': {
+            'lms.djangoapp': {
+                'relative_path': 'receivers',
+                'receivers': [
+                    {
+                        'receiver_func_name': 'user_sync_to_idp',
+                        'signal_path': 'django.db.models.signals.post_save',
+                        'sender_path': 'django.contrib.auth.models.User',
+                    },
+                    {
+                        'receiver_func_name': 'user_sync_to_idp',
+                        'signal_path': 'django.db.models.signals.post_save',
+                        'sender_path': 'common.djangoapps.student.models.UserProfile',
+                    },
+                ],
+            },
+            'cms.djangoapp': {
+                'relative_path': 'receivers',
+                'receivers': [
+                    {
+                        'receiver_func_name': 'user_sync_to_idp',
+                        'signal_path': 'django.db.models.signals.post_save',
+                        'sender_path': 'django.contrib.auth.models.User',
+                    },
+                    {
+                        'receiver_func_name': 'user_sync_to_idp',
+                        'signal_path': 'django.db.models.signals.post_save',
+                        'sender_path': 'common.djangoapps.student.models.UserProfile',
+                    },
+                ],
+            },
+
+        },
     }
