@@ -25,7 +25,7 @@ def user_sync_to_idp(sender, instance, **kwargs):
 
     for field in instance.fields:
         if field.name in fields_to_sync.keys():
-            user_update_dict[field.name] = fields_to_sync[field.name]
+            user_update_dict[fields_to_sync[field.name]] = getattr(instance, field.name)
 
     api.update_user(instance, {
             'user': user_update_dict
