@@ -17,7 +17,7 @@ def user_sync_to_idp(sender, instance, **kwargs):
 
     # Not necessary to sync if just created.  Already in sync.
     if kwargs['created']:
-        return False
+        return
 
     fields_to_sync = constants.USER_FIELDS_TO_SYNC_OPENEDX_TO_IDP
 
@@ -27,6 +27,7 @@ def user_sync_to_idp(sender, instance, **kwargs):
         if field.name in fields_to_sync.keys():
             user_update_dict[fields_to_sync[field.name]] = getattr(instance, field.name)
 
+    # will raise an Exception from raise_for_status if failure code
     api.update_user(instance, {
             'user': user_update_dict
         }
