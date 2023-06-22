@@ -41,7 +41,7 @@ def test_app_config():
                     {
                         'receiver_func_name': 'user_sync_to_idp',
                         'signal_path': 'django.db.models.signals.post_save',
-                        'sender_path': 'common.djangoapps.student.models.UserProfile',
+                        'sender_path': 'student.models.UserProfile',
                     },
                 ],
             },
@@ -56,7 +56,7 @@ def test_app_config():
                     {
                         'receiver_func_name': 'user_sync_to_idp',
                         'signal_path': 'django.db.models.signals.post_save',
-                        'sender_path': 'common.djangoapps.student.models.UserProfile',
+                        'sender_path': 'student.models.UserProfile',
                     },
                 ],
             },
