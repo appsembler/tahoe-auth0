@@ -4,4 +4,4 @@ tahoe_idp initialization module
 
 # Increase this version by 1 after every backward-incompatible
 # change in the exported data format
-__version__ = "2.4.0"
+__version__ = "2.4.1"
