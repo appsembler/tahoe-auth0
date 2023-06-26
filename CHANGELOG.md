@@ -9,7 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## 2.4.2 - 2023-06-22
+## 2.4.3 - 2023-06-26
+ - Check if Tahoe IdP enabled in config (avoid running in unrelated tests)
+
+## 2.4.2 - 2023-06-23
  - Fix User, UserProfile save signals handler fields access
 
 ## 2.4.1 - 2023-06-22

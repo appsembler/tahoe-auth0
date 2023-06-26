@@ -2,7 +2,7 @@
 Signal receivers for tahoe-idp Django app.
 """
 
-from . import api, constants
+from . import api, constants, helpers
 
 
 def user_sync_to_idp(sender, instance, **kwargs):
@@ -17,6 +17,9 @@ def user_sync_to_idp(sender, instance, **kwargs):
 
     # Not necessary to sync if just created.  Already in sync.
     if kwargs['created']:
+        return
+
+    if not helpers.is_tahoe_idp_enabled():  # avoid edx-platform test failures
         return
 
     fields_to_sync = constants.USER_FIELDS_TO_SYNC_OPENEDX_TO_IDP
