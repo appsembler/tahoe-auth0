@@ -23,7 +23,7 @@ def user_sync_to_idp(sender, instance, **kwargs):
 
     user_update_dict = {}
 
-    for field in instance.fields:
+    for field in instance._meta.fields:
         if field.name in fields_to_sync.keys():
             user_update_dict[fields_to_sync[field.name]] = getattr(instance, field.name)
 

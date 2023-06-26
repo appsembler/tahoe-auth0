@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 2.4.2 - 2023-06-22
+ - Fix User, UserProfile save signals handler fields access
+
 ## 2.4.1 - 2023-06-22
  - Fix module import of student.models for signal handler
 
