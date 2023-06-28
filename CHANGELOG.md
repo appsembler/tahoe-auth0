@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 2.4.3 - 2023-06-26
+ - Check if Tahoe IdP enabled in config (avoid running in unrelated tests)
+
+## 2.4.2 - 2023-06-23
+ - Fix User, UserProfile save signals handler fields access
+
+## 2.4.1 - 2023-06-22
+ - Fix module import of student.models for signal handler
+
 ## 2.4.0 - 2023-06-22
  - Signal handler for User and UserProfile post_save to sync new values to fields in IdP
 
