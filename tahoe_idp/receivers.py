@@ -2,6 +2,8 @@
 Signal receivers for tahoe-idp Django app.
 """
 
+from django.contrib.auth.models import User
+
 from . import api, constants, helpers
 
 
@@ -30,8 +32,10 @@ def user_sync_to_idp(sender, instance, **kwargs):
         if field.name in fields_to_sync.keys():
             user_update_dict[fields_to_sync[field.name]] = getattr(instance, field.name)
 
-    # will raise an Exception from raise_for_status if failure code
-    api.update_user(instance, {
-            'user': user_update_dict
-        }
-    )
+    if user_update_dict:
+        user = instance if sender == User else instance.user
+        # will raise an Exception from raise_for_status if failure code
+        api.update_user(user, {
+                'user': user_update_dict
+            }
+        )
