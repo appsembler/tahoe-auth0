@@ -13,6 +13,7 @@ External Python API helpers goes here.
 """
 
 from datetime import datetime
+import logging
 import pytz
 from social_django.models import UserSocialAuth
 
@@ -20,6 +21,9 @@ from urllib.parse import urlencode
 
 from .constants import BACKEND_NAME
 from . import helpers
+
+
+log = logging.getLogger(__name__)
 
 
 def request_password_reset(email):
@@ -64,10 +68,17 @@ def get_tahoe_idp_id_by_user(user):
     if user.is_anonymous:
         raise ValueError('Non-anonymous User should be provided')
 
-    social_auth_entry = UserSocialAuth.objects.get(
-        user_id=user.id, provider=BACKEND_NAME,
-    )
-    return social_auth_entry.uid
+    try:
+        social_auth_entry = UserSocialAuth.objects.get(
+            user_id=user.id, provider=BACKEND_NAME,
+        )
+        return social_auth_entry.uid
+    except UserSocialAuth.DoesNotExist:
+        # should only be an internal Appsembler admin user that was not migrated to IdP
+        log.warn(
+            'Could not find tahoe IdP id: No UserSocialAuth record connecting {} to Tahoe IdP.'.format(user.username)
+            )
+        return None
 
 
 def update_user(user, properties):
@@ -78,6 +89,9 @@ def update_user(user, properties):
     """
     api_client = helpers.get_api_client()
     idp_user_id = get_tahoe_idp_id_by_user(user)
+    if idp_user_id is None:
+        return
+
     client_response = api_client.patch_user(
         user_id=idp_user_id,
         request=properties,
