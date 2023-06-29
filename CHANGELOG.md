@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 2.5.0 - 2023-06-29
+ - Catch exceptions trying to get a tahoe idp uid for users
+
 ## 2.4.4 - 2023-06-28
  - Fix user_sync_to_idp receiver for UserProfile
 
