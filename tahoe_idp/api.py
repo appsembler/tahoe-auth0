@@ -75,7 +75,7 @@ def get_tahoe_idp_id_by_user(user):
         return social_auth_entry.uid
     except UserSocialAuth.DoesNotExist:
         # should only be an internal Appsembler admin user that was not migrated to IdP
-        log.warn(
+        log.warning(
             'Could not find tahoe IdP id: No UserSocialAuth record connecting {} to Tahoe IdP.'.format(user.username)
             )
         return None

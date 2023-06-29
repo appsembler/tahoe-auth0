@@ -5,7 +5,7 @@ from datetime import datetime
 
 import pytest
 from django.contrib.auth.models import AnonymousUser, User
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.core.exceptions import MultipleObjectsReturned
 from requests import HTTPError
 from social_django.models import UserSocialAuth
 from unittest.mock import patch
@@ -118,8 +118,7 @@ def test_get_tahoe_idp_id_by_user_validation():
         get_tahoe_idp_id_by_user(user=AnonymousUser())
 
     user_without_idp_id = user_factory()
-    with pytest.raises(ObjectDoesNotExist):  # Should fail for malformed data
-        get_tahoe_idp_id_by_user(user=user_without_idp_id)
+    assert get_tahoe_idp_id_by_user(user=user_without_idp_id) is None, "Missing IdP Id should return None not error"
 
 
 def test_get_tahoe_idp_id_by_user_two_idp_ids():
