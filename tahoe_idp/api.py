@@ -12,11 +12,9 @@ External Python API helpers goes here.
  * For breaking changes, new functions should be created
 """
 
-import contextlib
 from datetime import datetime
 import logging
 import pytz
-from requests import exceptions as requests_exceptions
 from social_django.models import UserSocialAuth
 
 from urllib.parse import urlencode
@@ -26,21 +24,6 @@ from . import helpers
 
 
 log = logging.getLogger(__name__)
-
-
-@contextlib.contextmanager
-def with_user_api_allowed_error_conditions(user):
-    """API function context manager to handle allowable error conditions."""
-
-    try:
-        yield
-    except requests_exceptions.HTTPError:
-        # Superusers may be associated with Tenants other than the one
-        # matching the domain in the request context.
-        if user.is_superuser:
-            log.info('Catching 404 from IdP for Tahoe superuser {}'.format(user.username))
-        else:
-            raise
 
 
 def request_password_reset(email):
@@ -109,13 +92,12 @@ def update_user(user, properties):
     if idp_user_id is None:
         return
 
-    with with_user_api_allowed_error_conditions(user):
-        client_response = api_client.patch_user(
-            user_id=idp_user_id,
-            request=properties,
-        )
-        http_response = helpers.get_successful_fusion_auth_http_response(client_response)
-        return http_response
+    client_response = api_client.patch_user(
+        user_id=idp_user_id,
+        request=properties,
+    )
+    http_response = helpers.get_successful_fusion_auth_http_response(client_response)
+    return http_response
 
 
 def update_user_email(user, email, set_email_as_verified=False):
