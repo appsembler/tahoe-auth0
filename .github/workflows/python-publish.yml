@@ -26,7 +26,7 @@ jobs:
     - name: Build package
       run: python -m build
     - name: Publish package for GitHub releases
-      uses: pypa/gh-action-pypi-publish@a56da0b891b3dc519c7ee3284aff1fad93cc8598
+      uses: pypa/gh-action-pypi-publish@ade57f54dcc56d4858ca681c80269c26dc7b9149
       if: ${{ startsWith(github.ref, 'refs/tags') }}
       with:
         user: __token__
