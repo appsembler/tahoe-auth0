@@ -58,6 +58,19 @@ class TahoeIdpOAuth2(BaseOAuth2):
             params["idp_hint"] = default_idp_hint
         return params
 
+    def auth_extra_arguments(self):
+        """
+        Override the parent class' `auth_extra_arguments` to remove blank`loginId` args.
+        loginId is defined as an extra arg via SOCIAL_AUTH_TAHOE_IDP_AUTH_EXTRA_ARGUMENTS in settings.
+        If auth request was initiated with a queryString value loginId, pass it through to FusionAuth.
+        If not, remove the loginId arg from the auth request.
+        loginId can be used in FusionAuth templates to pre-populate the username field in the login form.
+        """
+        extra_args = super().auth_extra_arguments()
+        if extra_args.get("loginId", "") is None:
+            del extra_args["loginId"]
+        return extra_args
+
     def get_key_and_secret(self):
         """Return tuple with Consumer Key and Consumer Secret for current
         service provider. Must return (key, secret), order *must* be respected.

@@ -98,7 +98,7 @@ def get_successful_fusion_auth_http_response(fa_response):
 
 def get_key_and_secret():
     """
-    Return tuple with Consumer Key and Consumer Secret for Tahoe IdP OAuth client.
+    Return dict with Consumer Key and Consumer Secret for Tahoe IdP OAuth client.
     """
     fail_if_tahoe_idp_not_enabled()
     key = config_client_api.get_admin_value('TAHOE_IDP_CLIENT_ID')
